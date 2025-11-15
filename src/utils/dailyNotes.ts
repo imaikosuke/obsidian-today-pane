@@ -339,3 +339,43 @@ export async function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 	return null;
 }
 
+/**
+ * テンプレートファイルの内容を取得
+ * @param app - Obsidianアプリケーションインスタンス
+ * @returns テンプレートファイルの内容、または空文字列（テンプレートが存在しない場合）
+ */
+export async function getTemplateContent(app: App): Promise<string> {
+	const settings = getDailyNoteSettings(app);
+	if (!settings || !settings.template) {
+		return "";
+	}
+
+	try {
+		// テンプレートファイルのパスを取得
+		let templatePath = settings.template;
+		
+		// テンプレートファイルが存在するか確認（まず元のパスで検索）
+		let templateFile = app.vault.getAbstractFileByPath(templatePath);
+		
+		// 見つからない場合、.md拡張子を追加して再検索
+		if (!(templateFile instanceof TFile)) {
+			const templatePathWithExt = templatePath.endsWith(".md") ? templatePath : `${templatePath}.md`;
+			templateFile = app.vault.getAbstractFileByPath(templatePathWithExt);
+			if (templateFile instanceof TFile) {
+				templatePath = templatePathWithExt;
+			}
+		}
+		
+		if (!(templateFile instanceof TFile)) {
+			return "";
+		}
+
+		// テンプレートファイルの内容を読み込む
+		const content = await app.vault.read(templateFile);
+		return content;
+	} catch (error) {
+		// エラーが発生した場合は空文字列を返す
+		return "";
+	}
+}
+

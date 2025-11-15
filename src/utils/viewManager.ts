@@ -1,5 +1,5 @@
 import { Plugin } from "obsidian";
-import { getTodayDailyNoteFile, getTodayDailyNotePath } from "./dailyNotes";
+import { getTodayDailyNoteFile, getTodayDailyNotePath, getTemplateContent } from "./dailyNotes";
 
 /**
  * 今日のデイリーノートを開く
@@ -21,8 +21,9 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		let file = await getTodayDailyNoteFile(app);
 
 		if (!file) {
-			// ファイルがまだ存在しない場合、作成する
-			file = await app.vault.create(notePath, "");
+			// ファイルがまだ存在しない場合、テンプレートから作成する
+			const templateContent = await getTemplateContent(app);
+			file = await app.vault.create(notePath, templateContent);
 		}
 
 		// 右サイドバー全体にファイルを開く
