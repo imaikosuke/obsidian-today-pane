@@ -1,5 +1,6 @@
 import { Plugin } from "obsidian";
-import { getTodayDailyNoteFile, getTodayDailyNotePath, getTemplateContent } from "./dailyNotes";
+import { getTodayDailyNoteFile, getTodayDailyNotePath, getTemplateContent, replaceDateInTemplate } from "./dailyNotes";
+import TodayPanePlugin from "../../main";
 
 /**
  * 今日のデイリーノートを開く
@@ -22,7 +23,15 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 
 		if (!file) {
 			// ファイルがまだ存在しない場合、テンプレートから作成する
-			const templateContent = await getTemplateContent(app);
+			let templateContent = await getTemplateContent(app);
+			
+			// テンプレート内のdateフィールドをYYYY-MM-DD形式で置換
+			if (plugin instanceof TodayPanePlugin) {
+				const today = new Date();
+				const dateFormat = "YYYY-MM-DD";
+				templateContent = replaceDateInTemplate(templateContent, today, dateFormat);
+			}
+			
 			file = await app.vault.create(notePath, templateContent);
 		}
 

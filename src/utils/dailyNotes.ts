@@ -379,3 +379,60 @@ export async function getTemplateContent(app: App): Promise<string> {
 	}
 }
 
+/**
+ * テンプレート内のフロントマターのdateフィールドを動的な日付で置換
+ * @param templateContent - テンプレートの内容
+ * @param date - 置換する日付
+ * @param dateFormat - 日付の形式（例: "YYYY-MM-DD"）
+ * @returns 置換後のテンプレート内容
+ */
+export function replaceDateInTemplate(
+	templateContent: string,
+	date: Date,
+	dateFormat: string
+): string {
+	if (!templateContent) {
+		return templateContent;
+	}
+
+	// フロントマターの開始と終了を検出
+	const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+	const match = templateContent.match(frontMatterRegex);
+	
+	if (!match) {
+		// フロントマターがない場合はそのまま返す
+		return templateContent;
+	}
+
+	const frontMatter = match[1];
+	const restOfContent = templateContent.substring(match[0].length);
+
+	// 日付をフォーマット
+	const formattedDate = formatDateForDailyNote(date, dateFormat);
+
+	// dateフィールドを検出して置換
+	// パターン: date: (任意の値) または date:(任意の値)
+	// 行単位で処理する
+	const lines = frontMatter.split('\n');
+	const newLines: string[] = [];
+	let dateReplaced = false;
+
+	for (const line of lines) {
+		// date: で始まる行を検出（コロンの前後に空白があっても可）
+		const dateLineMatch = line.match(/^(\s*)date\s*:\s*(.*)$/);
+		if (dateLineMatch && !dateReplaced) {
+			// インデントを保持して置換
+			const indent = dateLineMatch[1];
+			newLines.push(`${indent}date: ${formattedDate}`);
+			dateReplaced = true;
+		} else {
+			newLines.push(line);
+		}
+	}
+
+	const newFrontMatter = newLines.join('\n');
+
+	// フロントマターと残りのコンテンツを結合
+	return `---\n${newFrontMatter}\n---\n${restOfContent}`;
+}
+
