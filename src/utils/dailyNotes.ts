@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from "obsidian";
-import { ExtendedApp, DailyNoteOptions } from "../types/obsidian-internal";
+import { ExtendedApp, DailyNoteOptions, DailyNotesInstance } from "../types/obsidian-internal";
 
 /**
  * デイリーノートの設定情報
@@ -28,6 +28,46 @@ function extractSettingsFromOptions(options: DailyNoteOptions | undefined): Dail
 }
 
 /**
+ * デイリーノートプラグインオブジェクトから設定を取得
+ * @param dailyNotesPlugin - デイリーノートプラグインオブジェクト
+ * @returns 設定情報、またはnull
+ */
+function extractSettingsFromPlugin(
+	dailyNotesPlugin: {
+		instance?: DailyNotesInstance;
+		options?: DailyNoteOptions;
+		settings?: DailyNoteOptions;
+	} | null
+): DailyNoteSettings | null {
+	if (!dailyNotesPlugin) {
+		return null;
+	}
+
+	// インスタンスから取得を試みる
+	if (dailyNotesPlugin.instance) {
+		const options = dailyNotesPlugin.instance.options || dailyNotesPlugin.instance.settings;
+		if (options) {
+			const settings = extractSettingsFromOptions(options);
+			if (settings) {
+				return settings;
+			}
+		}
+	}
+
+	// プラグインオブジェクト自体から取得を試みる
+	if (dailyNotesPlugin.options || dailyNotesPlugin.settings) {
+		const settings = extractSettingsFromOptions(
+			dailyNotesPlugin.options || dailyNotesPlugin.settings
+		);
+		if (settings) {
+			return settings;
+		}
+	}
+
+	return null;
+}
+
+/**
  * Obsidianの内部プラグインからデイリーノート設定を取得
  * @param app - Obsidianアプリケーションインスタンス
  * @returns 設定情報、またはnull
@@ -42,70 +82,28 @@ function getSettingsFromInternalPlugins(app: ExtendedApp): DailyNoteSettings | n
 
 		// 方法1: plugins.dailyNotes から取得
 		const plugins = internalPlugins.plugins;
-		if (plugins && plugins.dailyNotes) {
-			const dailyNotesPlugin = plugins.dailyNotes;
-			
-			// インスタンスから取得を試みる
-			if (dailyNotesPlugin.instance) {
-				const instance = dailyNotesPlugin.instance;
-				const options = instance.options || instance.settings;
-				if (options) {
-					const settings = extractSettingsFromOptions(options);
-					if (settings && (settings.folder !== undefined || settings.format)) {
-						return settings;
-					}
-				}
-			}
-			
-			// プラグインオブジェクト自体から取得を試みる
-			if (dailyNotesPlugin.options || dailyNotesPlugin.settings) {
-				const settings = extractSettingsFromOptions(
-					dailyNotesPlugin.options || dailyNotesPlugin.settings
-				);
-				if (settings && (settings.folder !== undefined || settings.format)) {
-					return settings;
-				}
+		if (plugins?.dailyNotes) {
+			const settings = extractSettingsFromPlugin(plugins.dailyNotes);
+			if (settings) {
+				return settings;
 			}
 		}
 
 		// 方法2: getPluginById を使用
 		if (internalPlugins.getPluginById) {
-			const dailyNotesPlugin = internalPlugins.getPluginById("daily-notes");
-			if (dailyNotesPlugin) {
-				if (dailyNotesPlugin.instance) {
-					const instance = dailyNotesPlugin.instance;
-					const options = instance.options || instance.settings;
-					if (options) {
-						const settings = extractSettingsFromOptions(options);
-						if (settings && (settings.folder !== undefined || settings.format)) {
-							return settings;
-						}
-					}
-				}
-				
-				if (dailyNotesPlugin.options || dailyNotesPlugin.settings) {
-					const settings = extractSettingsFromOptions(
-						dailyNotesPlugin.options || dailyNotesPlugin.settings
-					);
-					if (settings && (settings.folder !== undefined || settings.format)) {
-						return settings;
-					}
-				}
+			const settings = extractSettingsFromPlugin(
+				internalPlugins.getPluginById("daily-notes")
+			);
+			if (settings) {
+				return settings;
 			}
 		}
 
 		// 方法3: 直接アクセス
 		if (internalPlugins.dailyNotes) {
-			const dailyNotesPlugin = internalPlugins.dailyNotes;
-			if (dailyNotesPlugin.instance) {
-				const instance = dailyNotesPlugin.instance;
-				const options = instance.options || instance.settings;
-				if (options) {
-					const settings = extractSettingsFromOptions(options);
-					if (settings && (settings.folder !== undefined || settings.format)) {
-						return settings;
-					}
-				}
+			const settings = extractSettingsFromPlugin(internalPlugins.dailyNotes);
+			if (settings) {
+				return settings;
 			}
 		}
 
@@ -185,54 +183,6 @@ export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
 		return vaultSettings;
 	}
 
-	// Method 4: 直接的なアクセス方法を試す
-	try {
-		// より直接的なアクセス方法
-		const extendedApp = app as ExtendedApp & {
-			internalPlugins?: ExtendedApp["internalPlugins"] & {
-				getPluginById?: (id: string) => {
-					instance?: DailyNoteOptions;
-					options?: DailyNoteOptions;
-					settings?: DailyNoteOptions;
-				} | null;
-			};
-		};
-		if (extendedApp.internalPlugins?.getPluginById) {
-			const dailyNotesPlugin = extendedApp.internalPlugins.getPluginById("daily-notes");
-			if (dailyNotesPlugin) {
-				// インスタンスから取得を試みる
-				if (dailyNotesPlugin.instance) {
-					const instance = dailyNotesPlugin.instance;
-					const options = instance.options || instance.settings;
-					const settings = extractSettingsFromOptions(options);
-					if (settings) {
-						return settings;
-					}
-				}
-				// プラグインオブジェクト自体から取得を試みる
-				if (dailyNotesPlugin.options || dailyNotesPlugin.settings) {
-					const settings = extractSettingsFromOptions(
-						dailyNotesPlugin.options || dailyNotesPlugin.settings
-					);
-					if (settings) {
-						return settings;
-					}
-				}
-			}
-		}
-
-		// Method 5: グローバル設定から取得を試みる
-		try {
-			const vault = app.vault;
-			// これは最後の手段で、通常は使用しない
-			void vault;
-		} catch {
-			new Notice("エラーが発生しました。");
-		}
-	} catch {
-		new Notice("エラーが発生しました。");
-	}
-
 	return null;
 }
 
@@ -243,50 +193,23 @@ export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
  * @returns フォーマットされた日付文字列
  */
 export function formatDateForDailyNote(date: Date, format: string): string {
-	const year = date.getFullYear();
+	const year = String(date.getFullYear());
+	const yearShort = year.slice(-2);
 	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	const yearShort = String(year).slice(-2);
 	const monthNoPad = String(date.getMonth() + 1);
+	const day = String(date.getDate()).padStart(2, "0");
 	const dayNoPad = String(date.getDate());
 
-	// フォーマット文字列を文字ごとに処理（再帰関数を使用）
-	const processFormat = (index: number, acc: string): string => {
-		if (index >= format.length) {
-			return acc;
-		}
-		
-		// YYYY をチェック（4文字先読み）
-		if (format.substr(index, 4) === "YYYY") {
-			return processFormat(index + 4, acc + String(year));
-		}
-		// YY をチェック（2文字先読み、ただしYYYYの一部でないことを確認）
-		else if (format.substr(index, 2) === "YY" && format.substr(index, 4) !== "YYYY") {
-			return processFormat(index + 2, acc + yearShort);
-		}
-		// MM をチェック（2文字先読み）
-		else if (format.substr(index, 2) === "MM") {
-			return processFormat(index + 2, acc + month);
-		}
-		// DD をチェック（2文字先読み）
-		else if (format.substr(index, 2) === "DD") {
-			return processFormat(index + 2, acc + day);
-		}
-		// M をチェック（単独、MMの一部でないことを確認）
-		else if (format[index] === "M" && format.substr(index, 2) !== "MM") {
-			return processFormat(index + 1, acc + monthNoPad);
-		}
-		// D をチェック（単独、DDの一部でないことを確認）
-		else if (format[index] === "D" && format.substr(index, 2) !== "DD") {
-			return processFormat(index + 1, acc + dayNoPad);
-		}
-		// その他の文字はそのまま
-		else {
-			return processFormat(index + 1, acc + format[index]);
-		}
-	};
-
-	return processFormat(0, "");
+	// 長いパターンから順に置換（YYYY → YY → MM → M → DD → D）
+	// YYYYを先に置換することで、YYの誤置換を防ぐ
+	// MMとDDを先に置換することで、単独のMやDの誤置換を防ぐ
+	return format
+		.replace(/YYYY/g, year)
+		.replace(/MM/g, month)
+		.replace(/DD/g, day)
+		.replace(/YY/g, yearShort)
+		.replace(/M/g, monthNoPad)
+		.replace(/D/g, dayNoPad);
 }
 
 /**
@@ -317,17 +240,6 @@ export function getDailyNotePathForDate(app: App, date: Date): string | null {
 export function getTodayDailyNotePath(app: App): string | null {
 	const today = new Date();
 	return getDailyNotePathForDate(app, today);
-}
-
-/**
- * 前日のデイリーノートのファイルパスを取得
- * @param app - Obsidianアプリケーションインスタンス
- * @returns ファイルパス、またはnull（設定が見つからない場合）
- */
-export function getYesterdayDailyNotePath(app: App): string | null {
-	const yesterday = new Date();
-	yesterday.setDate(yesterday.getDate() - 1);
-	return getDailyNotePathForDate(app, yesterday);
 }
 
 /**
@@ -388,11 +300,7 @@ export function isNonTodayDailyNote(app: App, filePath: string): boolean {
 	
 	// パターンに一致するかチェック
 	const regex = new RegExp(`^${pattern}$`);
-	if (regex.test(nameWithoutExt)) {
-		return true;
-	}
-
-	return false;
+	return regex.test(nameWithoutExt);
 }
 
 /**

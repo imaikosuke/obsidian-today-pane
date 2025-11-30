@@ -1,5 +1,5 @@
-import { Notice, Plugin } from "obsidian";
-import { openTodayNote } from "../utils/viewManager";
+import { Plugin } from "obsidian";
+import { openTodayNoteWithErrorHandling } from "../utils/viewManager";
 
 /**
  * プラグインのコマンドを登録
@@ -7,24 +7,16 @@ import { openTodayNote } from "../utils/viewManager";
  */
 export function registerCommands(plugin: Plugin): void {
 	// リボンアイコンを追加して今日のノートを開く
-	plugin.addRibbonIcon("calendar-days", "Open Today's Note", async () => {
-		try {
-			await openTodayNote(plugin);
-		} catch {
-			new Notice("エラーが発生しました。");
-		}
+	plugin.addRibbonIcon("calendar-days", "Open Today's Note", () => {
+		openTodayNoteWithErrorHandling(plugin);
 	});
 
 	// コマンドを追加して今日のノートを開く
 	plugin.addCommand({
 		id: "open-today-pane",
 		name: "Open Today's Note",
-		callback: async () => {
-			try {
-				await openTodayNote(plugin);
-			} catch {
-				new Notice("エラーが発生しました。");
-			}
+		callback: () => {
+			openTodayNoteWithErrorHandling(plugin);
 		},
 	});
 }

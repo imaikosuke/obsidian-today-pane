@@ -1,6 +1,6 @@
 import { Notice, Plugin } from "obsidian";
 import { registerCommands } from "./src/commands";
-import { openTodayNote } from "./src/utils/viewManager";
+import { openTodayNoteWithErrorHandling } from "./src/utils/viewManager";
 import { TodayPaneSettings, DEFAULT_SETTINGS } from "./src/settings";
 import { TodayPaneSettingTab } from "./src/ui/SettingsTab";
 
@@ -39,11 +39,7 @@ export default class TodayPanePlugin extends Plugin {
 			// これにより、Obsidian再起動時にも確実に開くことができる
 			if (this.settings.autoOpenOnStartup) {
 				this.app.workspace.onLayoutReady(async () => {
-					try {
-						await openTodayNote(this);
-					} catch {
-						new Notice("エラーが発生しました。");
-					}
+					await openTodayNoteWithErrorHandling(this);
 				});
 			}
 		} catch {
@@ -51,10 +47,4 @@ export default class TodayPanePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * プラグインがアンロードされたときに呼ばれる
-	 */
-	onunload(): void {
-		// 特にクリーンアップは不要
-	}
 }
