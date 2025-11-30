@@ -246,49 +246,43 @@ export function formatDateForDailyNote(date: Date, format: string): string {
 	const monthNoPad = String(date.getMonth() + 1);
 	const dayNoPad = String(date.getDate());
 
-	// フォーマット文字列を文字ごとに処理
-	let result = "";
-	let i = 0;
-	
-	while (i < format.length) {
+	// フォーマット文字列を文字ごとに処理（再帰関数を使用）
+	const processFormat = (index: number, acc: string): string => {
+		if (index >= format.length) {
+			return acc;
+		}
+		
 		// YYYY をチェック（4文字先読み）
-		if (format.substr(i, 4) === "YYYY") {
-			result += String(year);
-			i += 4;
+		if (format.substr(index, 4) === "YYYY") {
+			return processFormat(index + 4, acc + String(year));
 		}
 		// YY をチェック（2文字先読み、ただしYYYYの一部でないことを確認）
-		else if (format.substr(i, 2) === "YY" && format.substr(i, 4) !== "YYYY") {
-			result += yearShort;
-			i += 2;
+		else if (format.substr(index, 2) === "YY" && format.substr(index, 4) !== "YYYY") {
+			return processFormat(index + 2, acc + yearShort);
 		}
 		// MM をチェック（2文字先読み）
-		else if (format.substr(i, 2) === "MM") {
-			result += month;
-			i += 2;
+		else if (format.substr(index, 2) === "MM") {
+			return processFormat(index + 2, acc + month);
 		}
 		// DD をチェック（2文字先読み）
-		else if (format.substr(i, 2) === "DD") {
-			result += day;
-			i += 2;
+		else if (format.substr(index, 2) === "DD") {
+			return processFormat(index + 2, acc + day);
 		}
 		// M をチェック（単独、MMの一部でないことを確認）
-		else if (format[i] === "M" && format.substr(i, 2) !== "MM") {
-			result += monthNoPad;
-			i += 1;
+		else if (format[index] === "M" && format.substr(index, 2) !== "MM") {
+			return processFormat(index + 1, acc + monthNoPad);
 		}
 		// D をチェック（単独、DDの一部でないことを確認）
-		else if (format[i] === "D" && format.substr(i, 2) !== "DD") {
-			result += dayNoPad;
-			i += 1;
+		else if (format[index] === "D" && format.substr(index, 2) !== "DD") {
+			return processFormat(index + 1, acc + dayNoPad);
 		}
 		// その他の文字はそのまま
 		else {
-			result += format[i];
-			i += 1;
+			return processFormat(index + 1, acc + format[index]);
 		}
-	}
+	};
 
-	return result;
+	return processFormat(0, "");
 }
 
 /**
@@ -306,13 +300,7 @@ export function getDailyNotePathForDate(app: App, date: Date): string | null {
 	const formattedDate = formatDateForDailyNote(date, settings.format);
 	
 	const folder = settings.folder || "";
-	let path: string;
-	
-	if (folder) {
-		path = `${folder}/${formattedDate}.md`;
-	} else {
-		path = `${formattedDate}.md`;
-	}
+	const path = folder ? `${folder}/${formattedDate}.md` : `${formattedDate}.md`;
 	
 	return path;
 }
@@ -365,35 +353,34 @@ export function isNonTodayDailyNote(app: App, filePath: string): boolean {
 	const format = settings.format || "YYYY-MM-DD";
 
 	// ファイル名を取得（拡張子を除く）
-	let nameWithoutExt: string;
-	if (folder) {
-		const folderPrefix = folder.endsWith("/") ? folder : `${folder}/`;
-		// ファイルパスがデイリーノートのフォルダ内にあるかチェック
-		if (!filePath.startsWith(folderPrefix)) {
-			return false;
+	const nameWithoutExt: string = (() => {
+		if (folder) {
+			const folderPrefix = folder.endsWith("/") ? folder : `${folder}/`;
+			// ファイルパスがデイリーノートのフォルダ内にあるかチェック
+			if (!filePath.startsWith(folderPrefix)) {
+				return "";
+			}
+			// フォルダ部分を除いたファイル名を取得
+			const fileName = filePath.substring(folderPrefix.length);
+			return fileName.replace(/\.md$/, "");
+		} else {
+			// フォルダが設定されていない場合、ファイル名を取得
+			const fileName = filePath.split("/").pop() || "";
+			return fileName.replace(/\.md$/, "");
 		}
-		// フォルダ部分を除いたファイル名を取得
-		const fileName = filePath.substring(folderPrefix.length);
-		nameWithoutExt = fileName.replace(/\.md$/, "");
-	} else {
-		// フォルダが設定されていない場合、ファイル名を取得
-		const fileName = filePath.split("/").pop() || "";
-		nameWithoutExt = fileName.replace(/\.md$/, "");
-	}
+	})();
 
 	// フォーマットに基づいて、デイリーノートのパターンを生成
 	// フォーマット文字列を正規表現パターンに変換
 	// YYYY -> \d{4}, YY -> \d{2}, MM -> \d{1,2}, M -> \d{1,2}, DD -> \d{1,2}, D -> \d{1,2}
-	let pattern = format
+	const pattern = format
 		.replace(/YYYY/g, "\\d{4}")
 		.replace(/YY(?![Y])/g, "\\d{2}")
 		.replace(/MM(?![M])/g, "\\d{1,2}")
 		.replace(/M(?![M])/g, "\\d{1,2}")
 		.replace(/DD(?![D])/g, "\\d{1,2}")
-		.replace(/D(?![D])/g, "\\d{1,2}");
-	
-	// 区切り文字（-、/、_など）をエスケープ
-	pattern = pattern.replace(/([-\/_.])/g, "\\$1");
+		.replace(/D(?![D])/g, "\\d{1,2}")
+		.replace(/([-\/_.])/g, "\\$1"); // 区切り文字（-、/、_など）をエスケープ
 	
 	// パターンに一致するかチェック
 	const regex = new RegExp(`^${pattern}$`);
@@ -440,19 +427,28 @@ export async function getTemplateContent(app: App): Promise<string> {
 
 	try {
 		// テンプレートファイルのパスを取得
-		let templatePath = settings.template;
+		const initialTemplatePath = settings.template;
 		
 		// テンプレートファイルが存在するか確認（まず元のパスで検索）
-		let templateFile = app.vault.getAbstractFileByPath(templatePath);
+		const initialTemplateFile = app.vault.getAbstractFileByPath(initialTemplatePath);
 		
 		// 見つからない場合、.md拡張子を追加して再検索
-		if (!(templateFile instanceof TFile)) {
-			const templatePathWithExt = templatePath.endsWith(".md") ? templatePath : `${templatePath}.md`;
-			templateFile = app.vault.getAbstractFileByPath(templatePathWithExt);
-			if (templateFile instanceof TFile) {
-				templatePath = templatePathWithExt;
+		const { templatePath, templateFile } = (() => {
+			if (initialTemplateFile instanceof TFile) {
+				return { templatePath: initialTemplatePath, templateFile: initialTemplateFile };
 			}
-		}
+			
+			const templatePathWithExt = initialTemplatePath.endsWith(".md") 
+				? initialTemplatePath 
+				: `${initialTemplatePath}.md`;
+			const templateFile = app.vault.getAbstractFileByPath(templatePathWithExt);
+			
+			if (templateFile instanceof TFile) {
+				return { templatePath: templatePathWithExt, templateFile };
+			}
+			
+			return { templatePath: initialTemplatePath, templateFile: initialTemplateFile };
+		})();
 		
 		if (!(templateFile instanceof TFile)) {
 			return "";
@@ -502,21 +498,24 @@ export function replaceDateInTemplate(
 	// パターン: date: (任意の値) または date:(任意の値)
 	// 行単位で処理する
 	const lines = frontMatter.split('\n');
-	const newLines: string[] = [];
-	let dateReplaced = false;
-
-	for (const line of lines) {
+	
+	const { newLines } = lines.reduce((acc, line, index) => {
 		// date: で始まる行を検出（コロンの前後に空白があっても可）
 		const dateLineMatch = line.match(/^(\s*)date\s*:\s*(.*)$/);
-		if (dateLineMatch && !dateReplaced) {
+		if (dateLineMatch && !acc.dateReplaced) {
 			// インデントを保持して置換
 			const indent = dateLineMatch[1];
-			newLines.push(`${indent}date: ${formattedDate}`);
-			dateReplaced = true;
+			return {
+				newLines: [...acc.newLines, `${indent}date: ${formattedDate}`],
+				dateReplaced: true
+			};
 		} else {
-			newLines.push(line);
+			return {
+				newLines: [...acc.newLines, line],
+				dateReplaced: acc.dateReplaced
+			};
 		}
-	}
+	}, { newLines: [] as string[], dateReplaced: false });
 
 	const newFrontMatter = newLines.join('\n');
 

@@ -19,21 +19,23 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			return;
 		}
 
-		let file = await getTodayDailyNoteFile(app);
+		const existingFile = await getTodayDailyNoteFile(app);
 
-		if (!file) {
+		const file = existingFile ?? await (async () => {
 			// ファイルがまだ存在しない場合、テンプレートから作成する
-			let templateContent = await getTemplateContent(app);
+			const rawTemplateContent = await getTemplateContent(app);
 			
 			// テンプレート内のdateフィールドをYYYY-MM-DD形式で置換
-			if (plugin instanceof TodayPanePlugin) {
-				const today = new Date();
-				const dateFormat = "YYYY-MM-DD";
-				templateContent = replaceDateInTemplate(templateContent, today, dateFormat);
-			}
+			const templateContent = plugin instanceof TodayPanePlugin
+				? (() => {
+					const today = new Date();
+					const dateFormat = "YYYY-MM-DD";
+					return replaceDateInTemplate(rawTemplateContent, today, dateFormat);
+				})()
+				: rawTemplateContent;
 			
-			file = await app.vault.create(notePath, templateContent);
-		}
+			return await app.vault.create(notePath, templateContent);
+		})();
 
 		// 右サイドバー全体にファイルを開く
 		// まず、右サイドバー内のリーフを取得して処理
@@ -50,25 +52,21 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		}
 		
 		// 右サイドバー内のリーフを取得して処理
-		let rightLeafWithSameFile: any = null;
-		let rightLeaves: any[] = [];
-		const leavesToClose: any[] = [];
-		
-		try {
-			// すべてのリーフを取得（複数の方法を試行）
-			let allLeaves: any[] = [];
-			if (workspaceAny.getLeaves) {
-				allLeaves = workspaceAny.getLeaves();
-			} else {
-				// フォールバック: マークダウンビューのリーフを取得
-				allLeaves = workspace.getLeavesOfType("markdown");
-			}
-			
-			const container = rightSidebar.containerEl;
-			
-			if (container) {
+		const { rightLeafWithSameFile, rightLeaves } = await (async () => {
+			try {
+				// すべてのリーフを取得（複数の方法を試行）
+				const allLeaves: any[] = workspaceAny.getLeaves
+					? workspaceAny.getLeaves()
+					: workspace.getLeavesOfType("markdown");
+				
+				const container = rightSidebar.containerEl;
+				
+				if (!container) {
+					return { rightLeafWithSameFile: null, rightLeaves: [] };
+				}
+				
 				// 右サイドバー内のリーフをフィルタリング
-				rightLeaves = allLeaves.filter((leaf: any) => {
+				const initialRightLeaves = allLeaves.filter((leaf: any) => {
 					const leafEl = leaf.containerEl;
 					if (!leafEl) return false;
 					return container.contains(leafEl);
@@ -76,7 +74,21 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				
 				// 右サイドバー内のリーフを処理
 				// 今日以外のデイリーノートが開いているリーフを特定
-				for (const leaf of rightLeaves) {
+				const rightLeafWithSameFile = initialRightLeaves.find((leaf: any) => {
+					const currentView = leaf.view;
+					if (!currentView) return false;
+					
+					// MarkdownViewの場合
+					const currentFile = (currentView as any)?.file;
+					if (!currentFile) return false;
+					
+					// 今日のデイリーノートが既に開かれているかチェック
+					return currentFile.path === file.path;
+				}) || null;
+				
+				// 今日以外のデイリーノートが開かれているリーフを特定
+				const leavesToClose: any[] = [];
+				for (const leaf of initialRightLeaves) {
 					const currentView = leaf.view;
 					if (!currentView) {
 						continue;
@@ -88,9 +100,8 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						continue;
 					}
 					
-					// 今日のデイリーノートが既に開かれているかチェック
+					// 今日のデイリーノートが既に開かれている場合はスキップ
 					if (currentFile.path === file.path) {
-						rightLeafWithSameFile = leaf;
 						continue;
 					}
 					
@@ -104,11 +115,13 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				
 				// リーフを閉じる前に、再利用するリーフを決定
 				// 閉じるリーフが1つだけの場合、そのリーフを再利用する
-				let leafToReuse: any = null;
-				if (leavesToClose.length === 1 && rightLeaves.length === 1) {
-					// 閉じるリーフが1つだけで、右サイドバー内のリーフも1つだけの場合
-					// そのリーフを再利用する（閉じずに直接ファイルを開く）
-					leafToReuse = leavesToClose[0];
+				const leafToReuse = leavesToClose.length === 1 && initialRightLeaves.length === 1
+					? leavesToClose[0]
+					: null;
+				
+				if (leafToReuse) {
+					// 再利用するリーフがある場合は、それを使用
+					return { rightLeafWithSameFile, rightLeaves: [leafToReuse] };
 				} else {
 					// 複数のリーフがある場合、閉じるリーフを閉じてから既存のリーフを使用
 					for (const leaf of leavesToClose) {
@@ -125,29 +138,26 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						await new Promise(resolve => setTimeout(resolve, 100));
 						
 						// 再度リーフを取得
-						let allLeavesAfter: any[] = [];
-						if (workspaceAny.getLeaves) {
-							allLeavesAfter = workspaceAny.getLeaves();
-						} else {
-							allLeavesAfter = workspace.getLeavesOfType("markdown");
-						}
+						const allLeavesAfter: any[] = workspaceAny.getLeaves
+							? workspaceAny.getLeaves()
+							: workspace.getLeavesOfType("markdown");
 						
-						rightLeaves = allLeavesAfter.filter((leaf: any) => {
+						const rightLeaves = allLeavesAfter.filter((leaf: any) => {
 							const leafEl = leaf.containerEl;
 							if (!leafEl) return false;
 							return container.contains(leafEl);
 						});
+						
+						return { rightLeafWithSameFile, rightLeaves };
+					} else {
+						return { rightLeafWithSameFile, rightLeaves: initialRightLeaves };
 					}
 				}
-				
-				// 再利用するリーフがある場合は、それを使用
-				if (leafToReuse) {
-					rightLeaves = [leafToReuse];
-				}
+			} catch (error) {
+				new Notice("エラーが発生しました。");
+				return { rightLeafWithSameFile: null, rightLeaves: [] };
 			}
-		} catch (error) {
-			new Notice("エラーが発生しました。");
-		}
+		})();
 		
 		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ
 		if (rightLeafWithSameFile) {
@@ -156,41 +166,36 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		}
 		
 		// 右サイドバー内の既存のリーフを取得
-		let rightLeaf: any = null;
-		
-		// 既存のリーフがある場合はそれを使用
-		if (rightLeaves.length > 0) {
+		const rightLeaf: any = (() => {
+			// 既存のリーフがある場合はそれを使用
+			if (rightLeaves.length === 0) {
+				return null;
+			}
+			
 			// 最上部のリーフを取得
 			try {
-				let topLeaf: any = null;
-				let topY = Infinity;
-				
-				for (const leaf of rightLeaves) {
+				const topLeaf = rightLeaves.reduce((best: any, leaf: any) => {
 					const leafEl = (leaf as any).containerEl;
-					if (leafEl) {
-						const rect = leafEl.getBoundingClientRect();
-						const isVisible = rect.width > 0 && rect.height > 0;
-						const isValidPosition = rect.top > 0 || (rect.top === 0 && rect.width > 0 && rect.height > 0);
-						
-						if (isVisible && isValidPosition && rect.top < topY) {
-							topY = rect.top;
-							topLeaf = leaf;
-						}
+					if (!leafEl) return best;
+					
+					const rect = leafEl.getBoundingClientRect();
+					const isVisible = rect.width > 0 && rect.height > 0;
+					const isValidPosition = rect.top > 0 || (rect.top === 0 && rect.width > 0 && rect.height > 0);
+					
+					if (!isVisible || !isValidPosition) return best;
+					
+					if (!best || rect.top < best.top) {
+						return { leaf, top: rect.top };
 					}
-				}
+					return best;
+				}, null as { leaf: any; top: number } | null);
 				
-				if (topLeaf) {
-					rightLeaf = topLeaf;
-				} else if (rightLeaves.length > 0) {
-					rightLeaf = rightLeaves[0];
-				}
+				return topLeaf ? topLeaf.leaf : rightLeaves[0];
 			} catch (error) {
 				new Notice("エラーが発生しました。");
-				if (rightLeaves.length > 0) {
-					rightLeaf = rightLeaves[0];
-				}
+				return rightLeaves[0];
 			}
-		}
+		})();
 		
 		// 既存のリーフがない場合、新規リーフを作成せずに処理をスキップ
 		// （新規タブを作成しないようにする）
