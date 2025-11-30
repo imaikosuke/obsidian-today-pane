@@ -19,15 +19,15 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@eslint/js": "^9.39.1",
-		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "8.48.0",
-		"@typescript-eslint/parser": "8.48.0",
+		"@types/node": "^22.0.0",
+		"@typescript-eslint/eslint-plugin": "^8.48.0",
+		"@typescript-eslint/parser": "^8.48.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"eslint": "^9.39.1",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4",
+		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.48.0"
 	}
 }
