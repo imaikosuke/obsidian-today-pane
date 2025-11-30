@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-today-pane",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Always display today's daily note in a side panel.",
 	"main": "main.js",
 	"scripts": {
