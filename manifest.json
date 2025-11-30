@@ -6,5 +6,5 @@
 	"description": "Always display today's daily note in a side panel.",
 	"author": "imaikosuke",
 	"authorUrl": "https://github.com/imaikosuke",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
