@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-today-pane",
 	"version": "1.0.1",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Always display today's daily note in a side panel.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
