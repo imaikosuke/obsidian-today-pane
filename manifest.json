@@ -1,5 +1,5 @@
 {
-	"id": "obsidian-today-pane",
+	"id": "today-pane",
 	"name": "Today Pane",
 	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
