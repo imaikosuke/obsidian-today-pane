@@ -197,15 +197,28 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			}
 		})();
 		
-		// 既存のリーフがない場合、新規リーフを作成せずに処理をスキップ
-		// （新規タブを作成しないようにする）
-		if (!rightLeaf) {
+		// 既存のリーフがない場合、新しいリーフを作成する
+		const targetLeaf = (() => {
+			if (rightLeaf) {
+				return rightLeaf;
+			}
+			try {
+				// 右サイドバーに新しいリーフを作成
+				// getRightLeaf(false) は既存のリーフを返すか、存在しない場合は新しいリーフを作成する
+				return workspace.getRightLeaf(false);
+			} catch (error) {
+				new Notice("右サイドバーにリーフを作成できませんでした。");
+				return null;
+			}
+		})();
+		
+		if (!targetLeaf) {
 			return;
 		}
 		
-		// 既存のリーフに直接ファイルを開く（置き換え）
-		await rightLeaf.openFile(file);
-		workspace.revealLeaf(rightLeaf);
+		// リーフにファイルを開く
+		await targetLeaf.openFile(file);
+		workspace.revealLeaf(targetLeaf);
 	} catch (error) {
 		new Notice("エラーが発生しました。");
 	}
