@@ -16,7 +16,7 @@ export default class TodayPanePlugin extends Plugin {
 	async saveSettings(): Promise<void> {
 		try {
 			await this.saveData(this.settings);
-		} catch (error) {
+		} catch {
 			new Notice("エラーが発生しました。");
 		}
 	}
@@ -41,12 +41,12 @@ export default class TodayPanePlugin extends Plugin {
 				this.app.workspace.onLayoutReady(async () => {
 					try {
 						await openTodayNote(this);
-					} catch (error) {
+					} catch {
 						new Notice("エラーが発生しました。");
 					}
 				});
 			}
-		} catch (error) {
+		} catch {
 			new Notice("エラーが発生しました。");
 		}
 	}

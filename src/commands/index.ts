@@ -10,7 +10,7 @@ export function registerCommands(plugin: Plugin): void {
 	plugin.addRibbonIcon("calendar-days", "Open Today's Note", async () => {
 		try {
 			await openTodayNote(plugin);
-		} catch (error) {
+		} catch {
 			new Notice("エラーが発生しました。");
 		}
 	});
@@ -22,7 +22,7 @@ export function registerCommands(plugin: Plugin): void {
 		callback: async () => {
 			try {
 				await openTodayNote(plugin);
-			} catch (error) {
+			} catch {
 				new Notice("エラーが発生しました。");
 			}
 		},

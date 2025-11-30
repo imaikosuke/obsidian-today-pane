@@ -1,6 +1,7 @@
-import { Notice, Plugin } from "obsidian";
+import { Notice, Plugin, Workspace } from "obsidian";
 import { getTodayDailyNoteFile, getTodayDailyNotePath, isNonTodayDailyNote, getTemplateContent, replaceDateInTemplate } from "./dailyNotes";
 import TodayPanePlugin from "../../main";
+import { WorkspaceInternal, LeafInternal } from "../types/obsidian-internal";
 
 /**
  * 今日のデイリーノートを開く
@@ -39,11 +40,11 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 
 		// 右サイドバー全体にファイルを開く
 		// まず、右サイドバー内のリーフを取得して処理
-		const workspaceAny = workspace as any;
+		const workspaceInternal = workspace as Workspace & WorkspaceInternal;
 		
 		// 右サイドバーのコンテナを取得（複数の方法を試行）
-		const rightSplit = workspaceAny.rightSplit;
-		const rightSidebar = workspaceAny.rightSidebar || workspaceAny.rightDock || rightSplit;
+		const rightSplit = workspaceInternal.rightSplit;
+		const rightSidebar = workspaceInternal.rightSidebar || workspaceInternal.rightDock || rightSplit;
 		const hasRightSidebar = rightSidebar && rightSidebar.containerEl;
 		
 		// 右サイドバーが存在しない場合は、処理をスキップ
@@ -55,9 +56,9 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		const { rightLeafWithSameFile, rightLeaves } = await (async () => {
 			try {
 				// すべてのリーフを取得（複数の方法を試行）
-				const allLeaves: any[] = workspaceAny.getLeaves
-					? workspaceAny.getLeaves()
-					: workspace.getLeavesOfType("markdown");
+				const allLeaves: LeafInternal[] = workspaceInternal.getLeaves
+					? workspaceInternal.getLeaves()
+					: workspace.getLeavesOfType("markdown") as unknown as LeafInternal[];
 				
 				const container = rightSidebar.containerEl;
 				
@@ -66,7 +67,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				}
 				
 				// 右サイドバー内のリーフをフィルタリング
-				const initialRightLeaves = allLeaves.filter((leaf: any) => {
+				const initialRightLeaves = allLeaves.filter((leaf) => {
 					const leafEl = leaf.containerEl;
 					if (!leafEl) return false;
 					return container.contains(leafEl);
@@ -74,12 +75,12 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				
 				// 右サイドバー内のリーフを処理
 				// 今日以外のデイリーノートが開いているリーフを特定
-				const rightLeafWithSameFile = initialRightLeaves.find((leaf: any) => {
+				const rightLeafWithSameFile = initialRightLeaves.find((leaf) => {
 					const currentView = leaf.view;
 					if (!currentView) return false;
 					
 					// MarkdownViewの場合
-					const currentFile = (currentView as any)?.file;
+					const currentFile = currentView.file;
 					if (!currentFile) return false;
 					
 					// 今日のデイリーノートが既に開かれているかチェック
@@ -87,7 +88,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				}) || null;
 				
 				// 今日以外のデイリーノートが開かれているリーフを特定
-				const leavesToClose: any[] = [];
+				const leavesToClose: LeafInternal[] = [];
 				for (const leaf of initialRightLeaves) {
 					const currentView = leaf.view;
 					if (!currentView) {
@@ -95,7 +96,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 					}
 					
 					// MarkdownViewの場合
-					const currentFile = (currentView as any)?.file;
+					const currentFile = currentView.file;
 					if (!currentFile) {
 						continue;
 					}
@@ -126,8 +127,10 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 					// 複数のリーフがある場合、閉じるリーフを閉じてから既存のリーフを使用
 					for (const leaf of leavesToClose) {
 						try {
-							leaf.detach();
-						} catch (error) {
+							if (leaf.detach) {
+								leaf.detach();
+							}
+						} catch {
 							new Notice("エラーが発生しました。");
 						}
 					}
@@ -138,11 +141,11 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						await new Promise(resolve => setTimeout(resolve, 100));
 						
 						// 再度リーフを取得
-						const allLeavesAfter: any[] = workspaceAny.getLeaves
-							? workspaceAny.getLeaves()
-							: workspace.getLeavesOfType("markdown");
+						const allLeavesAfter: LeafInternal[] = workspaceInternal.getLeaves
+							? workspaceInternal.getLeaves()
+							: workspace.getLeavesOfType("markdown") as unknown as LeafInternal[];
 						
-						const rightLeaves = allLeavesAfter.filter((leaf: any) => {
+						const rightLeaves = allLeavesAfter.filter((leaf) => {
 							const leafEl = leaf.containerEl;
 							if (!leafEl) return false;
 							return container.contains(leafEl);
@@ -153,7 +156,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						return { rightLeafWithSameFile, rightLeaves: initialRightLeaves };
 					}
 				}
-			} catch (error) {
+			} catch {
 				new Notice("エラーが発生しました。");
 				return { rightLeafWithSameFile: null, rightLeaves: [] };
 			}
@@ -161,12 +164,12 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		
 		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ
 		if (rightLeafWithSameFile) {
-			workspace.revealLeaf(rightLeafWithSameFile);
+			workspace.revealLeaf(rightLeafWithSameFile as unknown as Parameters<typeof workspace.revealLeaf>[0]);
 			return;
 		}
 		
 		// 右サイドバー内の既存のリーフを取得
-		const rightLeaf: any = (() => {
+		const rightLeaf: LeafInternal | null = (() => {
 			// 既存のリーフがある場合はそれを使用
 			if (rightLeaves.length === 0) {
 				return null;
@@ -174,8 +177,8 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			
 			// 最上部のリーフを取得
 			try {
-				const topLeaf = rightLeaves.reduce((best: any, leaf: any) => {
-					const leafEl = (leaf as any).containerEl;
+				const topLeaf = rightLeaves.reduce((best: { leaf: LeafInternal; top: number } | null, leaf) => {
+					const leafEl = leaf.containerEl;
 					if (!leafEl) return best;
 					
 					const rect = leafEl.getBoundingClientRect();
@@ -188,10 +191,10 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						return { leaf, top: rect.top };
 					}
 					return best;
-				}, null as { leaf: any; top: number } | null);
+				}, null);
 				
 				return topLeaf ? topLeaf.leaf : rightLeaves[0];
-			} catch (error) {
+			} catch {
 				new Notice("エラーが発生しました。");
 				return rightLeaves[0];
 			}
@@ -200,13 +203,13 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		// 既存のリーフがない場合、新しいリーフを作成する
 		const targetLeaf = (() => {
 			if (rightLeaf) {
-				return rightLeaf;
+				return rightLeaf as unknown as Parameters<typeof workspace.revealLeaf>[0];
 			}
 			try {
 				// 右サイドバーに新しいリーフを作成
 				// getRightLeaf(false) は既存のリーフを返すか、存在しない場合は新しいリーフを作成する
 				return workspace.getRightLeaf(false);
-			} catch (error) {
+			} catch {
 				new Notice("右サイドバーにリーフを作成できませんでした。");
 				return null;
 			}
@@ -219,7 +222,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		// リーフにファイルを開く
 		await targetLeaf.openFile(file);
 		workspace.revealLeaf(targetLeaf);
-	} catch (error) {
+	} catch {
 		new Notice("エラーが発生しました。");
 	}
 }

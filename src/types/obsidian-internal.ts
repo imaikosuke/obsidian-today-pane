@@ -8,7 +8,21 @@ export interface InternalPlugins {
 		dailyNotes?: {
 			instance?: DailyNotesInstance;
 			enabled?: boolean;
+			options?: DailyNoteOptions;
+			settings?: DailyNoteOptions;
 		};
+	};
+	getPluginById?: (id: string) => {
+		instance?: DailyNotesInstance;
+		enabled?: boolean;
+		options?: DailyNoteOptions;
+		settings?: DailyNoteOptions;
+	} | null;
+	dailyNotes?: {
+		instance?: DailyNotesInstance;
+		enabled?: boolean;
+		options?: DailyNoteOptions;
+		settings?: DailyNoteOptions;
 	};
 }
 
@@ -58,6 +72,35 @@ export interface ExtendedVault extends Vault {
 }
 
 /**
+ * Workspace の内部 API 型定義
+ */
+export interface WorkspaceInternal {
+	rightSplit?: {
+		containerEl?: HTMLElement;
+	};
+	rightSidebar?: {
+		containerEl?: HTMLElement;
+	};
+	rightDock?: {
+		containerEl?: HTMLElement;
+	};
+	getLeaves?: () => LeafInternal[];
+}
+
+/**
+ * Leaf の内部 API 型定義
+ */
+export interface LeafInternal {
+	containerEl?: HTMLElement;
+	view?: {
+		file?: {
+			path: string;
+		};
+	};
+	detach?: () => void;
+}
+
+/**
  * 拡張されたApp型（内部APIアクセス用）
  * 交差型を使用してAppの型を拡張
  */
@@ -65,5 +108,6 @@ export type ExtendedApp = App & {
 	internalPlugins?: InternalPlugins;
 	plugins?: PluginManager;
 	vault?: ExtendedVault;
+	workspace?: WorkspaceInternal;
 };
 

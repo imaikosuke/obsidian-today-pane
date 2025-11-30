@@ -34,8 +34,7 @@ function extractSettingsFromOptions(options: DailyNoteOptions | undefined): Dail
  */
 function getSettingsFromInternalPlugins(app: ExtendedApp): DailyNoteSettings | null {
 	try {
-		const appAny = app as any;
-		const internalPlugins = appAny.internalPlugins;
+		const internalPlugins = app.internalPlugins;
 		
 		if (!internalPlugins) {
 			return null;
@@ -111,7 +110,7 @@ function getSettingsFromInternalPlugins(app: ExtendedApp): DailyNoteSettings | n
 		}
 
 		return null;
-	} catch (error) {
+	} catch {
 		new Notice("エラーが発生しました。");
 		return null;
 	}
@@ -188,16 +187,23 @@ export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
 
 	// Method 4: 直接的なアクセス方法を試す
 	try {
-		const appAny = app as any;
-		
 		// より直接的なアクセス方法
-		if (appAny.internalPlugins?.getPluginById) {
-			const dailyNotesPlugin = appAny.internalPlugins.getPluginById("daily-notes");
+		const extendedApp = app as ExtendedApp & {
+			internalPlugins?: ExtendedApp["internalPlugins"] & {
+				getPluginById?: (id: string) => {
+					instance?: DailyNoteOptions;
+					options?: DailyNoteOptions;
+					settings?: DailyNoteOptions;
+				} | null;
+			};
+		};
+		if (extendedApp.internalPlugins?.getPluginById) {
+			const dailyNotesPlugin = extendedApp.internalPlugins.getPluginById("daily-notes");
 			if (dailyNotesPlugin) {
 				// インスタンスから取得を試みる
 				if (dailyNotesPlugin.instance) {
 					const instance = dailyNotesPlugin.instance;
-					const options = instance.options || instance.settings || instance;
+					const options = instance.options || instance.settings;
 					const settings = extractSettingsFromOptions(options);
 					if (settings) {
 						return settings;
@@ -218,14 +224,12 @@ export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
 		// Method 5: グローバル設定から取得を試みる
 		try {
 			const vault = app.vault;
-			const adapter = (vault as any).adapter;
-			if (adapter && adapter.basePath) {
-				// これは最後の手段で、通常は使用しない
-			}
-		} catch (error) {
+			// これは最後の手段で、通常は使用しない
+			void vault;
+		} catch {
 			new Notice("エラーが発生しました。");
 		}
-	} catch (error) {
+	} catch {
 		new Notice("エラーが発生しました。");
 	}
 
@@ -380,7 +384,7 @@ export function isNonTodayDailyNote(app: App, filePath: string): boolean {
 		.replace(/M(?![M])/g, "\\d{1,2}")
 		.replace(/DD(?![D])/g, "\\d{1,2}")
 		.replace(/D(?![D])/g, "\\d{1,2}")
-		.replace(/([-\/_.])/g, "\\$1"); // 区切り文字（-、/、_など）をエスケープ
+		.replace(/([-/_.])/g, "\\$1"); // 区切り文字（-、/、_など）をエスケープ
 	
 	// パターンに一致するかチェック
 	const regex = new RegExp(`^${pattern}$`);
@@ -407,7 +411,7 @@ export async function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 		if (file instanceof TFile) {
 			return file;
 		}
-	} catch (error) {
+	} catch {
 		new Notice("エラーが発生しました。");
 	}
 
@@ -433,21 +437,21 @@ export async function getTemplateContent(app: App): Promise<string> {
 		const initialTemplateFile = app.vault.getAbstractFileByPath(initialTemplatePath);
 		
 		// 見つからない場合、.md拡張子を追加して再検索
-		const { templatePath, templateFile } = (() => {
+		const templateFile = (() => {
 			if (initialTemplateFile instanceof TFile) {
-				return { templatePath: initialTemplatePath, templateFile: initialTemplateFile };
+				return initialTemplateFile;
 			}
 			
 			const templatePathWithExt = initialTemplatePath.endsWith(".md") 
 				? initialTemplatePath 
 				: `${initialTemplatePath}.md`;
-			const templateFile = app.vault.getAbstractFileByPath(templatePathWithExt);
+			const file = app.vault.getAbstractFileByPath(templatePathWithExt);
 			
-			if (templateFile instanceof TFile) {
-				return { templatePath: templatePathWithExt, templateFile };
+			if (file instanceof TFile) {
+				return file;
 			}
 			
-			return { templatePath: initialTemplatePath, templateFile: initialTemplateFile };
+			return initialTemplateFile;
 		})();
 		
 		if (!(templateFile instanceof TFile)) {
@@ -457,7 +461,7 @@ export async function getTemplateContent(app: App): Promise<string> {
 		// テンプレートファイルの内容を読み込む
 		const content = await app.vault.read(templateFile);
 		return content;
-	} catch (error) {
+	} catch {
 		new Notice("エラーが発生しました。");
 		return "";
 	}
