@@ -8,7 +8,7 @@ import { TodayPaneSettingTab } from "./src/ui/SettingsTab";
  * 今日のノートを表示するプラグイン
  */
 export default class TodayPanePlugin extends Plugin {
-	settings: TodayPaneSettings;
+	settings!: TodayPaneSettings;
 
 	/**
 	 * 設定を保存する
