@@ -291,18 +291,18 @@ export function formatDateForDailyNote(date: Date, format: string): string {
 }
 
 /**
- * 今日のデイリーノートのファイルパスを取得
+ * 指定した日付のデイリーノートのファイルパスを取得
  * @param app - Obsidianアプリケーションインスタンス
+ * @param date - 日付
  * @returns ファイルパス、またはnull（設定が見つからない場合）
  */
-export function getTodayDailyNotePath(app: App): string | null {
+export function getDailyNotePathForDate(app: App, date: Date): string | null {
 	const settings = getDailyNoteSettings(app);
 	if (!settings) {
 		return null;
 	}
 
-	const today = new Date();
-	const formattedDate = formatDateForDailyNote(today, settings.format);
+	const formattedDate = formatDateForDailyNote(date, settings.format);
 	
 	const folder = settings.folder || "";
 	let path: string;
@@ -314,6 +314,93 @@ export function getTodayDailyNotePath(app: App): string | null {
 	}
 	
 	return path;
+}
+
+/**
+ * 今日のデイリーノートのファイルパスを取得
+ * @param app - Obsidianアプリケーションインスタンス
+ * @returns ファイルパス、またはnull（設定が見つからない場合）
+ */
+export function getTodayDailyNotePath(app: App): string | null {
+	const today = new Date();
+	return getDailyNotePathForDate(app, today);
+}
+
+/**
+ * 前日のデイリーノートのファイルパスを取得
+ * @param app - Obsidianアプリケーションインスタンス
+ * @returns ファイルパス、またはnull（設定が見つからない場合）
+ */
+export function getYesterdayDailyNotePath(app: App): string | null {
+	const yesterday = new Date();
+	yesterday.setDate(yesterday.getDate() - 1);
+	return getDailyNotePathForDate(app, yesterday);
+}
+
+/**
+ * ファイルパスが今日以外のデイリーノートかどうかを判定
+ * @param app - Obsidianアプリケーションインスタンス
+ * @param filePath - チェックするファイルパス
+ * @returns 今日以外のデイリーノートの場合true、それ以外はfalse
+ */
+export function isNonTodayDailyNote(app: App, filePath: string): boolean {
+	const settings = getDailyNoteSettings(app);
+	if (!settings) {
+		return false;
+	}
+
+	const todayPath = getTodayDailyNotePath(app);
+	if (!todayPath) {
+		return false;
+	}
+
+	// 今日のデイリーノートの場合はfalse
+	if (filePath === todayPath) {
+		return false;
+	}
+
+	// デイリーノートのフォルダをチェック
+	const folder = settings.folder || "";
+	const format = settings.format || "YYYY-MM-DD";
+
+	// ファイル名を取得（拡張子を除く）
+	let nameWithoutExt: string;
+	if (folder) {
+		const folderPrefix = folder.endsWith("/") ? folder : `${folder}/`;
+		// ファイルパスがデイリーノートのフォルダ内にあるかチェック
+		if (!filePath.startsWith(folderPrefix)) {
+			return false;
+		}
+		// フォルダ部分を除いたファイル名を取得
+		const fileName = filePath.substring(folderPrefix.length);
+		nameWithoutExt = fileName.replace(/\.md$/, "");
+	} else {
+		// フォルダが設定されていない場合、ファイル名を取得
+		const fileName = filePath.split("/").pop() || "";
+		nameWithoutExt = fileName.replace(/\.md$/, "");
+	}
+
+	// フォーマットに基づいて、デイリーノートのパターンを生成
+	// フォーマット文字列を正規表現パターンに変換
+	// YYYY -> \d{4}, YY -> \d{2}, MM -> \d{1,2}, M -> \d{1,2}, DD -> \d{1,2}, D -> \d{1,2}
+	let pattern = format
+		.replace(/YYYY/g, "\\d{4}")
+		.replace(/YY(?![Y])/g, "\\d{2}")
+		.replace(/MM(?![M])/g, "\\d{1,2}")
+		.replace(/M(?![M])/g, "\\d{1,2}")
+		.replace(/DD(?![D])/g, "\\d{1,2}")
+		.replace(/D(?![D])/g, "\\d{1,2}");
+	
+	// 区切り文字（-、/、_など）をエスケープ
+	pattern = pattern.replace(/([-\/_.])/g, "\\$1");
+	
+	// パターンに一致するかチェック
+	const regex = new RegExp(`^${pattern}$`);
+	if (regex.test(nameWithoutExt)) {
+		return true;
+	}
+
+	return false;
 }
 
 /**
