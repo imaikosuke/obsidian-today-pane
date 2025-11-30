@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App, Notice, TFile } from "obsidian";
 import { ExtendedApp, DailyNoteOptions } from "../types/obsidian-internal";
 
 /**
@@ -112,6 +112,7 @@ function getSettingsFromInternalPlugins(app: ExtendedApp): DailyNoteSettings | n
 
 		return null;
 	} catch (error) {
+		new Notice("エラーが発生しました。");
 		return null;
 	}
 }
@@ -222,10 +223,10 @@ export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
 				// これは最後の手段で、通常は使用しない
 			}
 		} catch (error) {
-			// 無視
+			new Notice("エラーが発生しました。");
 		}
 	} catch (error) {
-		// 無視
+		new Notice("エラーが発生しました。");
 	}
 
 	return null;
@@ -420,7 +421,7 @@ export async function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 			return file;
 		}
 	} catch (error) {
-		// ファイル取得エラーは無視し、nullを返す
+		new Notice("エラーが発生しました。");
 	}
 
 	return null;
@@ -461,7 +462,7 @@ export async function getTemplateContent(app: App): Promise<string> {
 		const content = await app.vault.read(templateFile);
 		return content;
 	} catch (error) {
-		// エラーが発生した場合は空文字列を返す
+		new Notice("エラーが発生しました。");
 		return "";
 	}
 }

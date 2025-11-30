@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import TodayPanePlugin from "../../main";
 import { TodayPaneSettings } from "../settings";
 
@@ -27,8 +27,12 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 				toggle
 					.setValue(this.plugin.settings.autoOpenOnStartup)
 					.onChange(async (value) => {
-						this.plugin.settings.autoOpenOnStartup = value;
-						await this.plugin.saveSettings();
+						try {
+							this.plugin.settings.autoOpenOnStartup = value;
+							await this.plugin.saveSettings();
+						} catch (error) {
+							new Notice("エラーが発生しました。");
+						}
 					})
 			);
 	}

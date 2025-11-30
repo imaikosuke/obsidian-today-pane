@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import { getTodayDailyNoteFile, getTodayDailyNotePath, isNonTodayDailyNote, getTemplateContent, replaceDateInTemplate } from "./dailyNotes";
 import TodayPanePlugin from "../../main";
 
@@ -115,7 +115,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 						try {
 							leaf.detach();
 						} catch (error) {
-							// エラーは無視
+							new Notice("エラーが発生しました。");
 						}
 					}
 					
@@ -146,7 +146,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				}
 			}
 		} catch (error) {
-			// エラーは無視して続行
+			new Notice("エラーが発生しました。");
 		}
 		
 		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ
@@ -185,7 +185,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 					rightLeaf = rightLeaves[0];
 				}
 			} catch (error) {
-				// エラーが発生した場合は、最初のリーフを使用
+				new Notice("エラーが発生しました。");
 				if (rightLeaves.length > 0) {
 					rightLeaf = rightLeaves[0];
 				}
@@ -202,7 +202,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		await rightLeaf.openFile(file);
 		workspace.revealLeaf(rightLeaf);
 	} catch (error) {
-		// エラーは無視
+		new Notice("エラーが発生しました。");
 	}
 }
 

@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import { openTodayNote } from "../utils/viewManager";
 
 /**
@@ -8,7 +8,11 @@ import { openTodayNote } from "../utils/viewManager";
 export function registerCommands(plugin: Plugin): void {
 	// リボンアイコンを追加して今日のノートを開く
 	plugin.addRibbonIcon("calendar-days", "Open Today's Note", async () => {
-		await openTodayNote(plugin);
+		try {
+			await openTodayNote(plugin);
+		} catch (error) {
+			new Notice("エラーが発生しました。");
+		}
 	});
 
 	// コマンドを追加して今日のノートを開く
@@ -16,7 +20,11 @@ export function registerCommands(plugin: Plugin): void {
 		id: "open-today-pane",
 		name: "Open Today's Note",
 		callback: async () => {
-			await openTodayNote(plugin);
+			try {
+				await openTodayNote(plugin);
+			} catch (error) {
+				new Notice("エラーが発生しました。");
+			}
 		},
 	});
 }
