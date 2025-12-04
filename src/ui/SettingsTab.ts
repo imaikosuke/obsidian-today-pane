@@ -17,8 +17,6 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Today Pane Settings" });
-
 		new Setting(containerEl)
 			.setName("Auto-open on startup")
 			.setDesc("Automatically open today's note when Obsidian starts")

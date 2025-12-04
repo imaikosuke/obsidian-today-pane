@@ -22,7 +22,7 @@ export async function openTodayNoteWithErrorHandling(plugin: Plugin): Promise<vo
  * @param app - Obsidianアプリケーションインスタンス
  * @returns 右サイドバー内のリーフ情報
  */
-async function getRightSidebarLeaves(
+function getRightSidebarLeaves(
 	workspaceInternal: Workspace & WorkspaceInternal,
 	rightSidebar: { containerEl: HTMLElement },
 	file: TFile,
@@ -37,7 +37,7 @@ async function getRightSidebarLeaves(
 		const container = rightSidebar.containerEl;
 		
 		if (!container) {
-			return { rightLeafWithSameFile: null, rightLeaves: [] };
+			return Promise.resolve({ rightLeafWithSameFile: null, rightLeaves: [] });
 		}
 		
 		// 右サイドバー内のリーフをフィルタリング
@@ -83,7 +83,7 @@ async function getRightSidebarLeaves(
 			: null;
 		
 		if (leafToReuse) {
-			return { rightLeafWithSameFile, rightLeaves: [leafToReuse] };
+			return Promise.resolve({ rightLeafWithSameFile, rightLeaves: [leafToReuse] });
 		}
 		
 		// 複数のリーフがある場合、閉じるリーフを閉じる
@@ -110,13 +110,13 @@ async function getRightSidebarLeaves(
 				return container.contains(leafEl);
 			});
 			
-			return { rightLeafWithSameFile, rightLeaves };
+			return Promise.resolve({ rightLeafWithSameFile, rightLeaves });
 		}
 		
-		return { rightLeafWithSameFile, rightLeaves: initialRightLeaves };
+		return Promise.resolve({ rightLeafWithSameFile, rightLeaves: initialRightLeaves });
 	} catch {
 		new Notice("Error.");
-		return { rightLeafWithSameFile: null, rightLeaves: [] };
+		return Promise.resolve({ rightLeafWithSameFile: null, rightLeaves: [] });
 	}
 }
 
@@ -176,7 +176,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		
 		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ
 		if (rightLeafWithSameFile) {
-			workspace.revealLeaf(rightLeafWithSameFile as unknown as Parameters<typeof workspace.revealLeaf>[0]);
+			void workspace.revealLeaf(rightLeafWithSameFile as unknown as Parameters<typeof workspace.revealLeaf>[0]);
 			return;
 		}
 		
@@ -228,7 +228,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		
 		// リーフにファイルを開く
 		await targetLeaf.openFile(file);
-		workspace.revealLeaf(targetLeaf);
+		void workspace.revealLeaf(targetLeaf);
 	} catch {
 		new Notice("Error.");
 	}

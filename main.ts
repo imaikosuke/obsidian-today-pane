@@ -27,7 +27,8 @@ export default class TodayPanePlugin extends Plugin {
 	async onload(): Promise<void> {
 		try {
 			// 設定を読み込む
-			this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+			const loadedData = (await this.loadData()) as Partial<TodayPaneSettings> | null;
+			this.settings = { ...DEFAULT_SETTINGS, ...loadedData };
 
 			// 設定タブを追加
 			this.addSettingTab(new TodayPaneSettingTab(this.app, this));

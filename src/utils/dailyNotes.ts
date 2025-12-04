@@ -308,22 +308,22 @@ export function isNonTodayDailyNote(app: App, filePath: string): boolean {
  * @param app - Obsidianアプリケーションインスタンス
  * @returns ファイルオブジェクト、またはnull（ファイルが存在しない場合）
  */
-export async function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
+export function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 	const path = getTodayDailyNotePath(app);
 	if (!path) {
-		return null;
+		return Promise.resolve(null);
 	}
 
 	try {
 		const file = app.vault.getAbstractFileByPath(path);
 		if (file instanceof TFile) {
-			return file;
+			return Promise.resolve(file);
 		}
 	} catch {
 		new Notice("Error.");
 	}
 
-	return null;
+	return Promise.resolve(null);
 }
 
 /**

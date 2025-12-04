@@ -7,16 +7,16 @@ import { openTodayNoteWithErrorHandling } from "../utils/viewManager";
  */
 export function registerCommands(plugin: Plugin): void {
 	// リボンアイコンを追加して今日のノートを開く
-	plugin.addRibbonIcon("calendar-days", "Open Today's Note", () => {
-		openTodayNoteWithErrorHandling(plugin);
+	plugin.addRibbonIcon("calendar-days", "Open today's note", () => {
+		void openTodayNoteWithErrorHandling(plugin);
 	});
 
 	// コマンドを追加して今日のノートを開く
 	plugin.addCommand({
-		id: "open-today-pane",
-		name: "Open Today's Note",
+		id: "open",
+		name: "Open today's note",
 		callback: () => {
-			openTodayNoteWithErrorHandling(plugin);
+			void openTodayNoteWithErrorHandling(plugin);
 		},
 	});
 }
