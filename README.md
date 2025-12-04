@@ -6,6 +6,8 @@
 
 A plugin that always displays today's daily note in the right sidebar. When you open Obsidian, today's note is automatically displayed, making it easy to keep daily records and manage tasks efficiently.
 
+![Today Pane Screenshot](today-pane-screenshot.png)
+
 > **Note**: This plugin is currently planned for registration in the Obsidian Community Plugins. Currently, only manual installation is supported.
 
 ## Why This Plugin?
@@ -24,6 +26,7 @@ With Today Pane, all this manual work is eliminated. Simply launch Obsidian, and
 - **Manual open**: Open today's note anytime using the ribbon icon or command palette
 - **Auto-create**: If today's note doesn't exist yet, it will be automatically created from your template
 - **Duplicate prevention**: If the same note is already open, it won't be opened again
+- **Desktop only**: This plugin is designed for desktop use only (not available on mobile)
 
 ## Usage
 
