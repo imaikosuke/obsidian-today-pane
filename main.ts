@@ -17,7 +17,7 @@ export default class TodayPanePlugin extends Plugin {
 		try {
 			await this.saveData(this.settings);
 		} catch {
-			new Notice("エラーが発生しました。");
+			new Notice("Error.");
 		}
 	}
 
@@ -43,7 +43,7 @@ export default class TodayPanePlugin extends Plugin {
 				});
 			}
 		} catch {
-			new Notice("エラーが発生しました。");
+			new Notice("Error.");
 		}
 	}
 

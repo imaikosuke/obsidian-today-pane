@@ -17,11 +17,11 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Today Pane の設定" });
+		containerEl.createEl("h2", { text: "Today Pane Settings" });
 
 		new Setting(containerEl)
-			.setName("起動時に自動で開く")
-			.setDesc("Obsidianを開いたときに、今日のノートを自動で開きます")
+			.setName("Auto-open on startup")
+			.setDesc("Automatically open today's note when Obsidian starts")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoOpenOnStartup)
@@ -30,7 +30,7 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 							this.plugin.settings.autoOpenOnStartup = value;
 							await this.plugin.saveSettings();
 						} catch {
-							new Notice("エラーが発生しました。");
+							new Notice("Error.");
 						}
 					})
 			);

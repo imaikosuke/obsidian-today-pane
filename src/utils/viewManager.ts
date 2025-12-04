@@ -10,7 +10,7 @@ export async function openTodayNoteWithErrorHandling(plugin: Plugin): Promise<vo
 	try {
 		await openTodayNote(plugin);
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 	}
 }
 
@@ -93,7 +93,7 @@ async function getRightSidebarLeaves(
 					leaf.detach();
 				}
 			} catch {
-				new Notice("エラーが発生しました。");
+				new Notice("Error.");
 			}
 		}
 		
@@ -115,7 +115,7 @@ async function getRightSidebarLeaves(
 		
 		return { rightLeafWithSameFile, rightLeaves: initialRightLeaves };
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 		return { rightLeafWithSameFile: null, rightLeaves: [] };
 	}
 }
@@ -202,7 +202,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 					
 					return topLeaf ? topLeaf.leaf : rightLeaves[0];
 				} catch {
-					new Notice("エラーが発生しました。");
+					new Notice("Error.");
 					return rightLeaves[0];
 				}
 			})()
@@ -217,7 +217,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 					// getRightLeaf(false) は既存のリーフを返すか、存在しない場合は新しいリーフを作成する
 					return workspace.getRightLeaf(false);
 				} catch {
-					new Notice("右サイドバーにリーフを作成できませんでした。");
+					new Notice("Could not create a leaf in the right sidebar.");
 					return null;
 				}
 			})();
@@ -230,7 +230,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 		await targetLeaf.openFile(file);
 		workspace.revealLeaf(targetLeaf);
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 	}
 }
 

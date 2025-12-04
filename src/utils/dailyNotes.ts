@@ -109,7 +109,7 @@ function getSettingsFromInternalPlugins(app: ExtendedApp): DailyNoteSettings | n
 
 		return null;
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 		return null;
 	}
 }
@@ -320,7 +320,7 @@ export async function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 			return file;
 		}
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 	}
 
 	return null;
@@ -370,7 +370,7 @@ export async function getTemplateContent(app: App): Promise<string> {
 		const content = await app.vault.read(templateFile);
 		return content;
 	} catch {
-		new Notice("エラーが発生しました。");
+		new Notice("Error.");
 		return "";
 	}
 }
