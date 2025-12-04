@@ -1,7 +1,7 @@
 # Obsidian Today Pane
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/imaikosuke/obsidian-today-pane/releases)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/imaikosuke/obsidian-today-pane/releases)
 [![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-7c3aed.svg)](https://obsidian.md)
 
 A plugin that always displays today's daily note in the right sidebar. When you open Obsidian, today's note is automatically displayed, making it easy to keep daily records and manage tasks efficiently.
