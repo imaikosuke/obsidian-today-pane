@@ -1,5 +1,6 @@
 import { App, Notice, TFile } from "obsidian";
 import { ExtendedApp, DailyNoteOptions, DailyNotesInstance } from "../types/obsidian-internal";
+import { TodayPaneSettings } from "../settings";
 
 /**
  * デイリーノートの設定情報
@@ -159,31 +160,57 @@ function getSettingsFromVaultConfig(app: ExtendedApp): DailyNoteSettings | null 
 /**
  * Obsidianからデイリーノート設定を取得
  * 複数の方法を順番に試行して設定を取得します。
+ * プラグイン設定でカスタム設定がある場合は、それを優先的に適用します。
  * @param app - Obsidianアプリケーションインスタンス
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns 設定情報、またはnull（設定が見つからない場合）
  */
-export function getDailyNoteSettings(app: App): DailyNoteSettings | null {
+export function getDailyNoteSettings(app: App, pluginSettings?: TodayPaneSettings): DailyNoteSettings | null {
 	const extendedApp = app as ExtendedApp;
+	let settings: DailyNoteSettings | null = null;
 
 	// Method 1: 内部プラグインから取得
 	const internalSettings = getSettingsFromInternalPlugins(extendedApp);
 	if (internalSettings) {
-		return internalSettings;
+		settings = internalSettings;
 	}
 
 	// Method 2: コミュニティプラグインから取得
-	const communitySettings = getSettingsFromCommunityPlugins(extendedApp);
-	if (communitySettings) {
-		return communitySettings;
+	if (!settings) {
+		const communitySettings = getSettingsFromCommunityPlugins(extendedApp);
+		if (communitySettings) {
+			settings = communitySettings;
+		}
 	}
 
 	// Method 3: Vault設定から取得（フォールバック）
-	const vaultSettings = getSettingsFromVaultConfig(extendedApp);
-	if (vaultSettings) {
-		return vaultSettings;
+	if (!settings) {
+		const vaultSettings = getSettingsFromVaultConfig(extendedApp);
+		if (vaultSettings) {
+			settings = vaultSettings;
+		}
 	}
 
-	return null;
+	// 設定が全く見つからない場合のデフォルト
+	if (!settings) {
+		settings = {
+			folder: "",
+			template: "",
+			format: "YYYY-MM-DD",
+		};
+	}
+
+	// プラグイン設定による上書き
+	if (pluginSettings) {
+		if (pluginSettings.customDailyNoteFolder !== "") {
+			settings.folder = pluginSettings.customDailyNoteFolder;
+		}
+		if (pluginSettings.customDailyNoteFormat !== "") {
+			settings.format = pluginSettings.customDailyNoteFormat;
+		}
+	}
+
+	return settings;
 }
 
 /**
@@ -216,10 +243,11 @@ export function formatDateForDailyNote(date: Date, format: string): string {
  * 指定した日付のデイリーノートのファイルパスを取得
  * @param app - Obsidianアプリケーションインスタンス
  * @param date - 日付
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns ファイルパス、またはnull（設定が見つからない場合）
  */
-export function getDailyNotePathForDate(app: App, date: Date): string | null {
-	const settings = getDailyNoteSettings(app);
+export function getDailyNotePathForDate(app: App, date: Date, pluginSettings?: TodayPaneSettings): string | null {
+	const settings = getDailyNoteSettings(app, pluginSettings);
 	if (!settings) {
 		return null;
 	}
@@ -235,26 +263,28 @@ export function getDailyNotePathForDate(app: App, date: Date): string | null {
 /**
  * 今日のデイリーノートのファイルパスを取得
  * @param app - Obsidianアプリケーションインスタンス
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns ファイルパス、またはnull（設定が見つからない場合）
  */
-export function getTodayDailyNotePath(app: App): string | null {
+export function getTodayDailyNotePath(app: App, pluginSettings?: TodayPaneSettings): string | null {
 	const today = new Date();
-	return getDailyNotePathForDate(app, today);
+	return getDailyNotePathForDate(app, today, pluginSettings);
 }
 
 /**
  * ファイルパスが今日以外のデイリーノートかどうかを判定
  * @param app - Obsidianアプリケーションインスタンス
  * @param filePath - チェックするファイルパス
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns 今日以外のデイリーノートの場合true、それ以外はfalse
  */
-export function isNonTodayDailyNote(app: App, filePath: string): boolean {
-	const settings = getDailyNoteSettings(app);
+export function isNonTodayDailyNote(app: App, filePath: string, pluginSettings?: TodayPaneSettings): boolean {
+	const settings = getDailyNoteSettings(app, pluginSettings);
 	if (!settings) {
 		return false;
 	}
 
-	const todayPath = getTodayDailyNotePath(app);
+	const todayPath = getTodayDailyNotePath(app, pluginSettings);
 	if (!todayPath) {
 		return false;
 	}
@@ -306,10 +336,11 @@ export function isNonTodayDailyNote(app: App, filePath: string): boolean {
 /**
  * 今日のデイリーノートファイルを取得
  * @param app - Obsidianアプリケーションインスタンス
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns ファイルオブジェクト、またはnull（ファイルが存在しない場合）
  */
-export function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
-	const path = getTodayDailyNotePath(app);
+export function getTodayDailyNoteFile(app: App, pluginSettings?: TodayPaneSettings): Promise<TFile | null> {
+	const path = getTodayDailyNotePath(app, pluginSettings);
 	if (!path) {
 		return Promise.resolve(null);
 	}
@@ -329,10 +360,11 @@ export function getTodayDailyNoteFile(app: App): Promise<TFile | null> {
 /**
  * テンプレートファイルの内容を取得
  * @param app - Obsidianアプリケーションインスタンス
+ * @param pluginSettings - プラグインの設定（オプション）
  * @returns テンプレートファイルの内容、または空文字列（テンプレートが存在しない場合）
  */
-export async function getTemplateContent(app: App): Promise<string> {
-	const settings = getDailyNoteSettings(app);
+export async function getTemplateContent(app: App, pluginSettings?: TodayPaneSettings): Promise<string> {
+	const settings = getDailyNoteSettings(app, pluginSettings);
 	if (!settings || !settings.template) {
 		return "";
 	}

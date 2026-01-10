@@ -1,6 +1,7 @@
 import { App, Notice, Plugin, Workspace, TFile } from "obsidian";
 import { getTodayDailyNoteFile, getTodayDailyNotePath, isNonTodayDailyNote, getTemplateContent, replaceDateInTemplate } from "./dailyNotes";
 import { WorkspaceInternal, LeafInternal } from "../types/obsidian-internal";
+import TodayPanePlugin from "../../main";
 
 /**
  * 今日のデイリーノートを開く（エラーハンドリング付き）
@@ -26,7 +27,8 @@ function getRightSidebarLeaves(
 	workspaceInternal: Workspace & WorkspaceInternal,
 	rightSidebar: { containerEl: HTMLElement },
 	file: TFile,
-	app: App
+	app: App,
+	plugin: TodayPanePlugin
 ): Promise<{ rightLeafWithSameFile: LeafInternal | null; rightLeaves: LeafInternal[] }> {
 	try {
 		// すべてのリーフを取得（複数の方法を試行）
@@ -71,7 +73,7 @@ function getRightSidebarLeaves(
 			if (currentFile.path === file.path) continue;
 			
 			// 今日以外のデイリーノートが開かれている場合は閉じる
-			if (isNonTodayDailyNote(app, currentFile.path)) {
+			if (isNonTodayDailyNote(app, currentFile.path, plugin.settings)) {
 				leavesToClose.push(leaf);
 			}
 		}
@@ -126,22 +128,23 @@ function getRightSidebarLeaves(
  * @returns Promise<void>
  */
 export async function openTodayNote(plugin: Plugin): Promise<void> {
+	const todayPlugin = plugin as TodayPanePlugin;
 	const { app } = plugin;
 	const { workspace } = app;
 
 	try {
 		// 今日のデイリーノートファイルを取得
-		const notePath = getTodayDailyNotePath(app);
+		const notePath = getTodayDailyNotePath(app, todayPlugin.settings);
 
 		if (!notePath) {
 			return;
 		}
 
-		const existingFile = await getTodayDailyNoteFile(app);
+		const existingFile = await getTodayDailyNoteFile(app, todayPlugin.settings);
 
 		const file = existingFile ?? await (async () => {
 			// ファイルがまだ存在しない場合、テンプレートから作成する
-			const rawTemplateContent = await getTemplateContent(app);
+			const rawTemplateContent = await getTemplateContent(app, todayPlugin.settings);
 			
 			// テンプレート内のdateフィールドをYYYY-MM-DD形式で置換
 			const today = new Date();
@@ -171,7 +174,8 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			workspaceInternal,
 			{ containerEl: rightSidebar.containerEl },
 			file,
-			app
+			app,
+			todayPlugin
 		);
 		
 		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ

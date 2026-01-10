@@ -32,6 +32,47 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 						}
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Daily note override (optional)")
+			.setHeading();
+
+		containerEl.createEl("p", {
+			text: "If set, these will override the default Obsidian daily notes settings. Leave empty to use the defaults.",
+			cls: "setting-item-description",
+		});
+
+		new Setting(containerEl)
+			.setName("Daily note folder")
+			.setDesc("Folder where daily notes are stored")
+			.addText((text) =>
+				text
+					.setPlaceholder("Example: daily")
+					.setValue(this.plugin.settings.customDailyNoteFolder)
+					.onChange(async (value) => {
+						// フォルダパスの正規化
+						const normalizedValue = value
+							.trim()
+							.replace(/\\/g, "/")
+							.replace(/^\/+/, "")
+							.replace(/\/+$/, "");
+						this.plugin.settings.customDailyNoteFolder = normalizedValue;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Daily note format")
+			.setDesc("Date format for daily notes")
+			.addText((text) =>
+				text
+					.setPlaceholder("Example: yyyy-mm-dd")
+					.setValue(this.plugin.settings.customDailyNoteFormat)
+					.onChange(async (value) => {
+						this.plugin.settings.customDailyNoteFormat = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }
 
