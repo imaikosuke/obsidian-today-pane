@@ -25,6 +25,8 @@ With Today Pane, all this manual work is eliminated. Simply launch Obsidian, and
 - **Auto-display**: Automatically displays today's daily note in the right sidebar when Obsidian starts
 - **Manual open**: Open today's note anytime using the ribbon icon or command palette
 - **Auto-create**: If today's note doesn't exist yet, it will be automatically created from your template
+- **Daily note overrides**: Optionally override the default Obsidian daily notes folder, format, and template
+- **Template date replacement**: Automatically replaces the `date:` field in the template's frontmatter with the current date
 - **Duplicate prevention**: If the same note is already open, it won't be opened again
 - **Desktop only**: This plugin is designed for desktop use only (not available on mobile)
 
@@ -47,6 +49,9 @@ With Today Pane, all this manual work is eliminated. Simply launch Obsidian, and
 From **Settings → Community plugins → Today Pane**, you can change the following settings:
 
 - **Auto-open on startup**: Whether to automatically open today's note when Obsidian starts (Default: Enabled)
+- **Daily note folder**: (Optional) Override the folder where daily notes are stored
+- **Daily note format**: (Optional) Override the date format for daily notes
+- **Daily note template file**: (Optional) Override the template file used for creating new daily notes
 
 ## License
 
