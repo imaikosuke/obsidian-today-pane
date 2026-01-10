@@ -1,6 +1,6 @@
-import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting, TextComponent } from "obsidian";
 import TodayPanePlugin from "../../main";
-import { MarkdownFileSuggest } from "./suggest/MarkdownFileSuggest";
+import { MarkdownFileSuggest } from "./MarkdownFileSuggest";
 
 /**
  * プラグインの設定タブ
@@ -11,6 +11,14 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: TodayPanePlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	/**
+	 * 入力欄を横に長くする
+	 */
+	private widenInput(text: TextComponent): TextComponent {
+		text.inputEl.addClass("today-pane-settings-input");
+		return text;
 	}
 
 	display(): void {
@@ -46,8 +54,8 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Daily note folder")
 			.setDesc("Folder where daily notes are stored")
-			.addText((text) =>
-				text
+			.addText((text) => {
+				this.widenInput(text)
 					.setPlaceholder("Example: daily")
 					.setValue(this.plugin.settings.customDailyNoteFolder)
 					.onChange(async (value) => {
@@ -59,27 +67,27 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 							.replace(/\/+$/, "");
 						this.plugin.settings.customDailyNoteFolder = normalizedValue;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Daily note format")
 			.setDesc("Date format for daily notes")
-			.addText((text) =>
-				text
+			.addText((text) => {
+				this.widenInput(text)
 					.setPlaceholder("Example: yyyy-mm-dd")
 					.setValue(this.plugin.settings.customDailyNoteFormat)
 					.onChange(async (value) => {
 						this.plugin.settings.customDailyNoteFormat = value.trim();
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Daily note template file")
 			.setDesc("Vault relative path to the template file")
 			.addText((text) => {
-				text
+				this.widenInput(text)
 					.setPlaceholder("Example: templates/daily.md")
 					.setValue(this.plugin.settings.customDailyNoteTemplate)
 					.onChange(async (value) => {
