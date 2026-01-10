@@ -9,9 +9,11 @@ manifest.version = targetVersion;
 writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t"));
 
 // update versions.json with target version and minAppVersion from manifest.json
-// but only if the target version is not already in versions.json
 const versions = JSON.parse(readFileSync('versions.json', 'utf8'));
-if (!Object.values(versions).includes(minAppVersion)) {
-    versions[targetVersion] = minAppVersion;
-    writeFileSync('versions.json', JSON.stringify(versions, null, '\t'));
-}
+versions[targetVersion] = minAppVersion;
+writeFileSync('versions.json', JSON.stringify(versions, null, '\t'));
+
+// update README.md with target version
+let readme = readFileSync("README.md", "utf8");
+readme = readme.replace(/version-(\d+\.\d+\.\d+)-blue\.svg/, `version-${targetVersion}-blue.svg`);
+writeFileSync("README.md", readme);
