@@ -149,13 +149,18 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			}
 
 			// ファイルがまだ存在しない場合、テンプレートから作成する
-			let rawTemplateContent = "";
-			try {
-				rawTemplateContent = await getTemplateContent(app, todayPlugin.settings);
-			} catch (e) {
-				// テンプレートが見つからない場合は作成を中断
-				const message = e instanceof Error ? e.message : "Template file not found.";
-				new Notice(`${message}\nCheck Today Pane → Daily note template.`);
+			const rawTemplateContent = await (async () => {
+				try {
+					return await getTemplateContent(app, todayPlugin.settings);
+				} catch (e) {
+					// テンプレートが見つからない場合は作成を中断
+					const message = e instanceof Error ? e.message : "Template file not found.";
+					new Notice(`${message}\nCheck Today Pane → Daily note template.`);
+					return null;
+				}
+			})();
+
+			if (rawTemplateContent === null) {
 				return null;
 			}
 			
