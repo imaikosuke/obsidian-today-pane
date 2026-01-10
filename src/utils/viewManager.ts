@@ -5,8 +5,8 @@ import { WorkspaceInternal, LeafInternal } from "../types/obsidian-internal";
 import TodayPanePlugin from "../../main";
 
 /**
- * 今日のデイリーノートを開く（エラーハンドリング付き）
- * @param plugin - プラグインインスタンス
+ * Open today's daily note (with error handling)
+ * @param plugin - Plugin instance
  */
 export async function openTodayNoteWithErrorHandling(plugin: Plugin): Promise<void> {
 	try {
@@ -17,12 +17,12 @@ export async function openTodayNoteWithErrorHandling(plugin: Plugin): Promise<vo
 }
 
 /**
- * 右サイドバー内のリーフを取得して処理
- * @param workspaceInternal - ワークスペースの内部オブジェクト
- * @param rightSidebar - 右サイドバーのコンテナ
- * @param file - 開くファイル
- * @param app - Obsidianアプリケーションインスタンス
- * @returns 右サイドバー内のリーフ情報
+ * Get and process leaves in the right sidebar
+ * @param workspaceInternal - Internal workspace object
+ * @param rightSidebar - Right sidebar container
+ * @param file - File to open
+ * @param app - Obsidian application instance
+ * @returns Leaf information in the right sidebar
  */
 function getRightSidebarLeaves(
 	workspaceInternal: Workspace & WorkspaceInternal,
@@ -32,7 +32,7 @@ function getRightSidebarLeaves(
 	plugin: TodayPanePlugin
 ): Promise<{ rightLeafWithSameFile: LeafInternal | null; rightLeaves: LeafInternal[] }> {
 	try {
-		// すべてのリーフを取得（複数の方法を試行）
+		// Get all leaves (trying multiple methods)
 		const allLeaves: LeafInternal[] = workspaceInternal.getLeaves
 			? workspaceInternal.getLeaves()
 			: workspaceInternal.getLeavesOfType("markdown") as unknown as LeafInternal[];
@@ -43,14 +43,14 @@ function getRightSidebarLeaves(
 			return Promise.resolve({ rightLeafWithSameFile: null, rightLeaves: [] });
 		}
 		
-		// 右サイドバー内のリーフをフィルタリング
+		// Filter leaves in the right sidebar
 		const initialRightLeaves = allLeaves.filter((leaf) => {
 			const leafEl = leaf.containerEl;
 			if (!leafEl) return false;
 			return container.contains(leafEl);
 		});
 		
-		// 今日のデイリーノートが既に開かれているリーフを特定
+		// Identify the leaf where today's daily note is already open
 		const rightLeafWithSameFile = initialRightLeaves.find((leaf) => {
 			const currentView = leaf.view;
 			if (!currentView) return false;
@@ -61,7 +61,7 @@ function getRightSidebarLeaves(
 			return currentFile.path === file.path;
 		}) || null;
 		
-		// 今日以外のデイリーノートが開かれているリーフを特定
+		// Identify leaves where daily notes other than today's are open
 		const leavesToClose: LeafInternal[] = [];
 		for (const leaf of initialRightLeaves) {
 			const currentView = leaf.view;
@@ -70,17 +70,17 @@ function getRightSidebarLeaves(
 			const currentFile = currentView.file;
 			if (!currentFile) continue;
 			
-			// 今日のデイリーノートが既に開かれている場合はスキップ
+			// Skip if today's daily note is already open
 			if (currentFile.path === file.path) continue;
 			
-			// 今日以外のデイリーノートが開かれている場合は閉じる
+			// Close if a daily note other than today's is open
 			if (isNonTodayDailyNote(app, currentFile.path, plugin.settings)) {
 				leavesToClose.push(leaf);
 			}
 		}
 		
-		// リーフを閉じる前に、再利用するリーフを決定
-		// 閉じるリーフが1つだけの場合、そのリーフを再利用する
+		// Determine which leaf to reuse before closing leaves
+		// If only one leaf is to be closed, reuse that leaf
 		const leafToReuse = leavesToClose.length === 1 && initialRightLeaves.length === 1
 			? leavesToClose[0]
 			: null;
@@ -89,7 +89,7 @@ function getRightSidebarLeaves(
 			return Promise.resolve({ rightLeafWithSameFile, rightLeaves: [leafToReuse] });
 		}
 		
-		// 複数のリーフがある場合、閉じるリーフを閉じる
+		// If there are multiple leaves, close the leaves to be closed
 		for (const leaf of leavesToClose) {
 			try {
 				if (leaf.detach) {
@@ -100,9 +100,9 @@ function getRightSidebarLeaves(
 			}
 		}
 		
-		// リーフを閉じた後、再度右サイドバー内のリーフを取得
+		// Get leaves in the right sidebar again after closing leaves
 		if (leavesToClose.length > 0) {
-			// 再度リーフを取得
+			// Get leaves again
 			const allLeavesAfter: LeafInternal[] = workspaceInternal.getLeaves
 				? workspaceInternal.getLeaves()
 				: workspaceInternal.getLeavesOfType("markdown") as unknown as LeafInternal[];
@@ -124,8 +124,8 @@ function getRightSidebarLeaves(
 }
 
 /**
- * 今日のデイリーノートを開く
- * @param plugin - プラグインインスタンス
+ * Open today's daily note
+ * @param plugin - Plugin instance
  * @returns Promise<void>
  */
 export async function openTodayNote(plugin: Plugin): Promise<void> {
@@ -134,7 +134,7 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 	const { workspace } = app;
 
 	try {
-		// 今日のデイリーノートファイルを取得
+		// Get today's daily note path
 		const notePath = getTodayDailyNotePath(app, todayPlugin.settings);
 
 		if (!notePath) {
@@ -148,12 +148,12 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				return existingFile;
 			}
 
-			// ファイルがまだ存在しない場合、テンプレートから作成する
+			// If the file doesn't exist yet, create it from a template
 			const rawTemplateContent = await (async () => {
 				try {
 					return await getTemplateContent(app, todayPlugin.settings);
 				} catch (e) {
-					// テンプレートが見つからない場合は作成を中断
+					// Abort creation if the template is not found
 					const message = e instanceof Error ? e.message : "Template file not found.";
 					new Notice(`${message}\nCheck Today Pane → Daily note template.`);
 					return null;
@@ -164,12 +164,12 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 				return null;
 			}
 			
-			// テンプレート内のdateフィールドをYYYY-MM-DD形式で置換
+			// Replace date field in template with YYYY-MM-DD format
 			const today = new Date();
 			const dateFormat = "YYYY-MM-DD";
 			const templateContent = replaceDateInTemplate(rawTemplateContent, today, dateFormat);
 			
-			// 親フォルダが存在しない場合は作成する
+			// Create parent folder if it doesn't exist
 			const lastSlashIndex = notePath.lastIndexOf("/");
 			if (lastSlashIndex !== -1) {
 				const parentPath = notePath.substring(0, lastSlashIndex);
@@ -183,22 +183,22 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			return;
 		}
 
-		// 右サイドバー全体にファイルを開く
-		// まず、右サイドバー内のリーフを取得して処理
+		// Open the file in the entire right sidebar
+		// First, get and process leaves in the right sidebar
 		const workspaceInternal = workspace as Workspace & WorkspaceInternal;
 		
-		// 右サイドバーのコンテナを取得（複数の方法を試行）
+		// Get the right sidebar container (trying multiple methods)
 		const rightSplit = workspaceInternal.rightSplit;
 		const rightSidebar = workspaceInternal.rightSidebar || workspaceInternal.rightDock || rightSplit;
 		const hasRightSidebar = rightSidebar && rightSidebar.containerEl;
 		
-		// 右サイドバーが存在しない場合は、処理をスキップ
+		// Skip processing if the right sidebar doesn't exist
 		if (!hasRightSidebar || !rightSidebar.containerEl) {
 			return;
 		}
 		
-		// 右サイドバー内のリーフを取得して処理
-		// hasRightSidebarチェックにより、containerElが存在することが保証されている
+		// Get and process leaves in the right sidebar
+		// containerEl is guaranteed to exist by the hasRightSidebar check
 		const { rightLeafWithSameFile, rightLeaves } = await getRightSidebarLeaves(
 			workspaceInternal,
 			{ containerEl: rightSidebar.containerEl },
@@ -207,13 +207,13 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			todayPlugin
 		);
 		
-		// 既に同じファイルが開かれている場合は、そのリーフをアクティブにするだけ
+		// If the same file is already open, just activate that leaf
 		if (rightLeafWithSameFile) {
 			void workspace.revealLeaf(rightLeafWithSameFile as unknown as Parameters<typeof workspace.revealLeaf>[0]);
 			return;
 		}
 		
-		// 右サイドバー内の既存のリーフを取得
+		// Get existing leaves in the right sidebar
 		const rightLeaf: LeafInternal | null = rightLeaves.length > 0
 			? (() => {
 				try {
@@ -241,13 +241,13 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			})()
 			: null;
 		
-		// 既存のリーフがない場合、新しいリーフを作成する
+		// If there's no existing leaf, create a new one
 		const targetLeaf: Parameters<typeof workspace.revealLeaf>[0] | null = rightLeaf
 			? (rightLeaf as unknown as Parameters<typeof workspace.revealLeaf>[0])
 			: (() => {
 				try {
-					// 右サイドバーに新しいリーフを作成
-					// getRightLeaf(false) は既存のリーフを返すか、存在しない場合は新しいリーフを作成する
+					// Create a new leaf in the right sidebar
+					// getRightLeaf(false) returns an existing leaf or creates a new one if it doesn't exist
 					return workspace.getRightLeaf(false);
 				} catch {
 					new Notice("Could not create a leaf in the right sidebar.");
@@ -259,11 +259,10 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			return;
 		}
 		
-		// リーフにファイルを開く
+		// Open the file in the leaf
 		await targetLeaf.openFile(file);
 		void workspace.revealLeaf(targetLeaf);
 	} catch {
 		new Notice("Error.");
 	}
 }
-

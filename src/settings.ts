@@ -1,30 +1,30 @@
 /**
- * プラグインの設定インターフェース
+ * Plugin settings interface
  */
 export interface TodayPaneSettings {
 	/**
-	 * Obsidian起動時に自動で今日のノートを開くかどうか
+	 * Whether to automatically open today's note when Obsidian starts
 	 */
 	autoOpenOnStartup: boolean;
 
 	/**
-	 * デイリーノートを保存するフォルダ（空の場合は自動取得）
+	 * Folder to save daily notes (automatically retrieved if empty)
 	 */
 	customDailyNoteFolder: string;
 
 	/**
-	 * デイリーノートの日付フォーマット（空の場合は自動取得）
+	 * Date format for daily notes (automatically retrieved if empty)
 	 */
 	customDailyNoteFormat: string;
 
 	/**
-	 * デイリーノートのテンプレートファイル（空の場合は自動取得）
+	 * Template file for daily notes (automatically retrieved if empty)
 	 */
 	customDailyNoteTemplate: string;
 }
 
 /**
- * デフォルト設定
+ * Default settings
  */
 export const DEFAULT_SETTINGS: TodayPaneSettings = {
 	autoOpenOnStartup: true,
@@ -32,4 +32,3 @@ export const DEFAULT_SETTINGS: TodayPaneSettings = {
 	customDailyNoteFormat: "",
 	customDailyNoteTemplate: "",
 };
-

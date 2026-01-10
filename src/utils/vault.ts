@@ -1,9 +1,9 @@
 import { App, TFolder, Notice } from "obsidian";
 
 /**
- * フォルダ階層を再帰的に作成する（冪等）
- * @param app - Obsidianアプリケーションインスタンス
- * @param folderPath - 作成するフォルダパス（例: "daily/2026/01"）
+ * Create folder hierarchy recursively (idempotent)
+ * @param app - Obsidian application instance
+ * @param folderPath - Folder path to create (e.g., "daily/2026/01")
  * @returns Promise<void>
  */
 export async function ensureFolderHierarchy(app: App, folderPath: string): Promise<void> {

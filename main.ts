@@ -5,14 +5,14 @@ import { TodayPaneSettings, DEFAULT_SETTINGS } from "./src/settings";
 import { TodayPaneSettingTab } from "./src/ui/SettingsTab";
 
 /**
- * 今日のノートを表示するプラグイン
+ * Plugin to display today's note
  */
 export default class TodayPanePlugin extends Plugin {
 	settings!: TodayPaneSettings;
 
 	/**
-	 * 設定を保存する
-	 */
+	 * Save settings
+ */
 	async saveSettings(): Promise<void> {
 		try {
 			await this.saveData(this.settings);
@@ -22,22 +22,22 @@ export default class TodayPanePlugin extends Plugin {
 	}
 
 	/**
-	 * プラグインが読み込まれたときに呼ばれる
-	 */
+	 * Called when the plugin is loaded
+ */
 	async onload(): Promise<void> {
 		try {
-			// 設定を読み込む
+			// Load settings
 			const loadedData = (await this.loadData()) as Partial<TodayPaneSettings> | null;
 			this.settings = { ...DEFAULT_SETTINGS, ...loadedData };
 
-			// 設定タブを追加
+			// Add settings tab
 			this.addSettingTab(new TodayPaneSettingTab(this.app, this));
 
-			// コマンドを登録
+			// Register commands
 			registerCommands(this);
 			
-			// 設定が有効な場合のみ、ワークスペースのレイアウトが準備できてから今日のノートを開く
-			// これにより、Obsidian再起動時にも確実に開くことができる
+			// Only if the setting is enabled, open today's note after the workspace layout is ready
+			// This ensures it opens correctly even when Obsidian restarts
 			if (this.settings.autoOpenOnStartup) {
 				this.app.workspace.onLayoutReady(async () => {
 					await openTodayNoteWithErrorHandling(this);

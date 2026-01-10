@@ -3,7 +3,7 @@ import TodayPanePlugin from "../../main";
 import { MarkdownFileSuggest } from "./MarkdownFileSuggest";
 
 /**
- * プラグインの設定タブ
+ * Plugin settings tab
  */
 export class TodayPaneSettingTab extends PluginSettingTab {
 	plugin: TodayPanePlugin;
@@ -14,7 +14,7 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * 入力欄を横に長くする
+	 * Widen the input field
 	 */
 	private widenInput(text: TextComponent): TextComponent {
 		text.inputEl.addClass("today-pane-settings-input");
@@ -59,7 +59,7 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 					.setPlaceholder("Example: daily")
 					.setValue(this.plugin.settings.customDailyNoteFolder)
 					.onChange(async (value) => {
-						// フォルダパスの正規化
+						// Normalize folder path
 						const normalizedValue = value
 							.trim()
 							.replace(/\\/g, "/")
@@ -91,7 +91,7 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 					.setPlaceholder("Example: templates/daily.md")
 					.setValue(this.plugin.settings.customDailyNoteTemplate)
 					.onChange(async (value) => {
-						// パスの正規化
+						// Normalize path
 						const normalizedValue = value
 							.trim()
 							.replace(/\\/g, "/")
@@ -100,9 +100,8 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 				
-				// サジェスト機能を紐付け
+				// Bind suggest functionality
 				new MarkdownFileSuggest(this.app, text.inputEl);
 			});
 	}
 }
-

@@ -1,7 +1,7 @@
 import { AbstractInputSuggest, App, TFile } from "obsidian";
 
 /**
- * Markdownファイルのサジェストクラス
+ * Suggest class for Markdown files
  */
 export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 	private inputEl: HTMLInputElement;
@@ -12,9 +12,9 @@ export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 	}
 
 	/**
-	 * クエリに基づいて候補を取得する
-	 * @param query - 入力されたクエリ
-	 * @returns 候補のリスト（最大5件）
+	 * Get suggestions based on the query
+	 * @param query - Entered query
+	 * @returns List of suggestions (max 5 items)
 	 */
 	getSuggestions(query: string): TFile[] {
 		if (!query) {
@@ -36,28 +36,28 @@ export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 				const aBase = a.basename.toLowerCase();
 				const bBase = b.basename.toLowerCase();
 
-				// 優先順位 1: basename がクエリで始まる
+				// Priority 1: basename starts with query
 				const aBaseStarts = aBase.startsWith(lowerCaseQuery);
 				const bBaseStarts = bBase.startsWith(lowerCaseQuery);
 				if (aBaseStarts && !bBaseStarts) return -1;
 				if (!aBaseStarts && bBaseStarts) return 1;
 
-				// 優先順位 2: path がクエリで始まる
+				// Priority 2: path starts with query
 				const aPathStarts = aPath.startsWith(lowerCaseQuery);
 				const bPathStarts = bPath.startsWith(lowerCaseQuery);
 				if (aPathStarts && !bPathStarts) return -1;
 				if (!aPathStarts && bPathStarts) return 1;
 
-				// 優先順位 3: パスの長さが短い順
+				// Priority 3: shorter path length first
 				return aPath.length - bPath.length;
 			})
 			.slice(0, 5);
 	}
 
 	/**
-	 * 候補をレンダリングする
-	 * @param file - 候補のファイル
-	 * @param el - レンダリング先の要素
+	 * Render the suggestion
+	 * @param file - Suggestion file
+	 * @param el - Element to render into
 	 */
 	renderSuggestion(file: TFile, el: HTMLElement): void {
 		el.createEl("div", { text: file.basename, cls: "suggestion-title" });
@@ -65,13 +65,13 @@ export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 	}
 
 	/**
-	 * 候補が選択されたときの処理
-	 * @param file - 選択されたファイル
+	 * Handle suggestion selection
+	 * @param file - Selected file
 	 */
 	selectSuggestion(file: TFile): void {
 		this.inputEl.value = file.path;
-		// Obsidianが HTMLElement に拡張している trigger メソッドを呼び出す
-		// これにより Setting の onChange が発火する
+		// Call the trigger method that Obsidian adds to HTMLElement
+		// This triggers the Setting's onChange event
 		const el = this.inputEl as HTMLElement & { trigger: (name: string) => void };
 		if (typeof el.trigger === "function") {
 			el.trigger("input");

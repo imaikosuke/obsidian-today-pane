@@ -1,7 +1,7 @@
 import { App, Vault } from "obsidian";
 
 /**
- * Obsidian内部プラグインの型定義
+ * Type definitions for Obsidian internal plugins
  */
 export interface InternalPlugins {
 	plugins?: {
@@ -27,7 +27,7 @@ export interface InternalPlugins {
 }
 
 /**
- * デイリーノートプラグインのインスタンス型定義
+ * Type definition for the daily note plugin instance
  */
 export interface DailyNotesInstance {
 	options?: DailyNoteOptions;
@@ -35,7 +35,7 @@ export interface DailyNotesInstance {
 }
 
 /**
- * デイリーノートのオプション設定
+ * Daily note option settings
  */
 export interface DailyNoteOptions {
 	folder?: string;
@@ -44,7 +44,7 @@ export interface DailyNoteOptions {
 }
 
 /**
- * Obsidianプラグインマネージャーの型定義
+ * Type definition for the Obsidian plugin manager
  */
 export interface PluginManager {
 	plugins?: {
@@ -56,7 +56,7 @@ export interface PluginManager {
 }
 
 /**
- * Vault設定の型定義
+ * Type definition for vault configuration
  */
 export interface VaultConfig {
 	dailyNoteFolder?: string;
@@ -65,14 +65,14 @@ export interface VaultConfig {
 }
 
 /**
- * 拡張されたVault型（内部APIアクセス用）
+ * Extended vault type (for internal API access)
  */
 export interface ExtendedVault extends Vault {
 	config?: VaultConfig;
 }
 
 /**
- * Workspace の内部 API 型定義
+ * Internal API type definition for Workspace
  */
 export interface WorkspaceInternal {
 	rightSplit?: {
@@ -88,7 +88,7 @@ export interface WorkspaceInternal {
 }
 
 /**
- * Leaf の内部 API 型定義
+ * Internal API type definition for Leaf
  */
 export interface LeafInternal {
 	containerEl?: HTMLElement;
@@ -101,8 +101,8 @@ export interface LeafInternal {
 }
 
 /**
- * 拡張されたApp型（内部APIアクセス用）
- * 交差型を使用してAppの型を拡張
+ * Extended App type (for internal API access)
+ * Extend the App type using an intersection type
  */
 export type ExtendedApp = App & {
 	internalPlugins?: InternalPlugins;
@@ -110,4 +110,3 @@ export type ExtendedApp = App & {
 	vault?: ExtendedVault;
 	workspace?: WorkspaceInternal;
 };
-
