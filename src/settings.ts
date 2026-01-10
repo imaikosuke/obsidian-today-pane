@@ -16,6 +16,11 @@ export interface TodayPaneSettings {
 	 * デイリーノートの日付フォーマット（空の場合は自動取得）
 	 */
 	customDailyNoteFormat: string;
+
+	/**
+	 * デイリーノートのテンプレートファイル（空の場合は自動取得）
+	 */
+	customDailyNoteTemplate: string;
 }
 
 /**
@@ -25,5 +30,6 @@ export const DEFAULT_SETTINGS: TodayPaneSettings = {
 	autoOpenOnStartup: true,
 	customDailyNoteFolder: "",
 	customDailyNoteFormat: "",
+	customDailyNoteTemplate: "",
 };
 

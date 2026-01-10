@@ -143,9 +143,21 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 
 		const existingFile = await getTodayDailyNoteFile(app, todayPlugin.settings);
 
-		const file = existingFile ?? await (async () => {
+		const file = await (async () => {
+			if (existingFile) {
+				return existingFile;
+			}
+
 			// ファイルがまだ存在しない場合、テンプレートから作成する
-			const rawTemplateContent = await getTemplateContent(app, todayPlugin.settings);
+			let rawTemplateContent = "";
+			try {
+				rawTemplateContent = await getTemplateContent(app, todayPlugin.settings);
+			} catch (e) {
+				// テンプレートが見つからない場合は作成を中断
+				const message = e instanceof Error ? e.message : "Template file not found.";
+				new Notice(`${message}\nCheck Today Pane → Daily note template.`);
+				return null;
+			}
 			
 			// テンプレート内のdateフィールドをYYYY-MM-DD形式で置換
 			const today = new Date();
@@ -161,6 +173,10 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 
 			return await app.vault.create(notePath, templateContent);
 		})();
+
+		if (!file) {
+			return;
+		}
 
 		// 右サイドバー全体にファイルを開く
 		// まず、右サイドバー内のリーフを取得して処理

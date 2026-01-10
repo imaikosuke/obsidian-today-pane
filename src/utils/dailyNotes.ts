@@ -208,6 +208,9 @@ export function getDailyNoteSettings(app: App, pluginSettings?: TodayPaneSetting
 		if (pluginSettings.customDailyNoteFormat !== "") {
 			settings.format = pluginSettings.customDailyNoteFormat;
 		}
+		if (pluginSettings.customDailyNoteTemplate !== "") {
+			settings.template = pluginSettings.customDailyNoteTemplate;
+		}
 	}
 
 	return settings;
@@ -369,40 +372,44 @@ export async function getTemplateContent(app: App, pluginSettings?: TodayPaneSet
 		return "";
 	}
 
-	try {
-		// テンプレートファイルのパスを取得
-		const initialTemplatePath = settings.template;
-		
-		// テンプレートファイルが存在するか確認（まず元のパスで検索）
-		const initialTemplateFile = app.vault.getAbstractFileByPath(initialTemplatePath);
-		
-		// 見つからない場合、.md拡張子を追加して再検索
-		const templateFile = (() => {
-			if (initialTemplateFile instanceof TFile) {
-				return initialTemplateFile;
-			}
-			
-			const templatePathWithExt = initialTemplatePath.endsWith(".md") 
-				? initialTemplatePath 
-				: `${initialTemplatePath}.md`;
-			const file = app.vault.getAbstractFileByPath(templatePathWithExt);
-			
-			if (file instanceof TFile) {
-				return file;
-			}
-			
+	// テンプレートファイルのパスを取得
+	const initialTemplatePath = settings.template;
+	
+	// テンプレートファイルが存在するか確認（まず元のパスで検索）
+	const initialTemplateFile = app.vault.getAbstractFileByPath(initialTemplatePath);
+	
+	// 見つからない場合、.md拡張子を追加して再検索
+	const templateFile = (() => {
+		if (initialTemplateFile instanceof TFile) {
 			return initialTemplateFile;
-		})();
-		
-		if (!(templateFile instanceof TFile)) {
-			return "";
 		}
+		
+		const templatePathWithExt = initialTemplatePath.endsWith(".md") 
+			? initialTemplatePath 
+			: `${initialTemplatePath}.md`;
+		const file = app.vault.getAbstractFileByPath(templatePathWithExt);
+		
+		if (file instanceof TFile) {
+			return file;
+		}
+		
+		return initialTemplateFile;
+	})();
+	
+	if (!(templateFile instanceof TFile)) {
+		// 独自設定が指定されているのに見つからない場合はエラーを投げる
+		if (pluginSettings?.customDailyNoteTemplate) {
+			throw new Error(`Template file not found: ${initialTemplatePath}`);
+		}
+		return "";
+	}
 
+	try {
 		// テンプレートファイルの内容を読み込む
 		const content = await app.vault.read(templateFile);
 		return content;
 	} catch {
-		new Notice("Error.");
+		new Notice("Error reading template file.");
 		return "";
 	}
 }

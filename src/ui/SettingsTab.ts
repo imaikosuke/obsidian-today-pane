@@ -73,6 +73,24 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Daily note template file")
+			.setDesc("Vault relative path to the template file")
+			.addText((text) =>
+				text
+					.setPlaceholder("Example: templates/daily.md")
+					.setValue(this.plugin.settings.customDailyNoteTemplate)
+					.onChange(async (value) => {
+						// パスの正規化
+						const normalizedValue = value
+							.trim()
+							.replace(/\\/g, "/")
+							.replace(/^\/+/, "");
+						this.plugin.settings.customDailyNoteTemplate = normalizedValue;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }
 
