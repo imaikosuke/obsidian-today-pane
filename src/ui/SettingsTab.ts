@@ -1,5 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import TodayPanePlugin from "../../main";
+import { MarkdownFileSuggest } from "./suggest/MarkdownFileSuggest";
 
 /**
  * プラグインの設定タブ
@@ -77,7 +78,7 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Daily note template file")
 			.setDesc("Vault relative path to the template file")
-			.addText((text) =>
+			.addText((text) => {
 				text
 					.setPlaceholder("Example: templates/daily.md")
 					.setValue(this.plugin.settings.customDailyNoteTemplate)
@@ -89,8 +90,11 @@ export class TodayPaneSettingTab extends PluginSettingTab {
 							.replace(/^\/+/, "");
 						this.plugin.settings.customDailyNoteTemplate = normalizedValue;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+				
+				// サジェスト機能を紐付け
+				new MarkdownFileSuggest(this.app, text.inputEl);
+			});
 	}
 }
 
