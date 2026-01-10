@@ -1,5 +1,6 @@
 import { App, Notice, Plugin, Workspace, TFile } from "obsidian";
 import { getTodayDailyNoteFile, getTodayDailyNotePath, isNonTodayDailyNote, getTemplateContent, replaceDateInTemplate } from "./dailyNotes";
+import { ensureFolderHierarchy } from "./vault";
 import { WorkspaceInternal, LeafInternal } from "../types/obsidian-internal";
 import TodayPanePlugin from "../../main";
 
@@ -151,6 +152,13 @@ export async function openTodayNote(plugin: Plugin): Promise<void> {
 			const dateFormat = "YYYY-MM-DD";
 			const templateContent = replaceDateInTemplate(rawTemplateContent, today, dateFormat);
 			
+			// 親フォルダが存在しない場合は作成する
+			const lastSlashIndex = notePath.lastIndexOf("/");
+			if (lastSlashIndex !== -1) {
+				const parentPath = notePath.substring(0, lastSlashIndex);
+				await ensureFolderHierarchy(app, parentPath);
+			}
+
 			return await app.vault.create(notePath, templateContent);
 		})();
 
