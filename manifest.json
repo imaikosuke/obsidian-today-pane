@@ -2,7 +2,7 @@
 	"id": "today-pane",
 	"name": "Today Pane",
 	"version": "1.1.0",
-	"minAppVersion": "0.15.0",
+	"minAppVersion": "1.7.2",
 	"description": "Always display today's daily note in a side panel.",
 	"author": "imaikosuke",
 	"authorUrl": "https://github.com/imaikosuke",
