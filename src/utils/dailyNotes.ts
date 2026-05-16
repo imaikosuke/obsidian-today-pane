@@ -450,7 +450,7 @@ export function replaceDateInTemplate(
 	// Process line by line
 	const lines = frontMatter.split('\n');
 	
-	const { newLines } = lines.reduce((acc, line, index) => {
+	const { newLines } = lines.reduce((acc, line, _index) => {
 		// Detect line starting with date: (allows spaces before/after colon)
 		const dateLineMatch = line.match(/^(\s*)date\s*:\s*(.*)$/);
 		if (dateLineMatch && !acc.dateReplaced) {

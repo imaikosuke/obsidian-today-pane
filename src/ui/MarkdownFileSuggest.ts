@@ -60,7 +60,7 @@ export class MarkdownFileSuggest extends AbstractInputSuggest<TFile> {
 	 * @param el - Element to render into
 	 */
 	renderSuggestion(file: TFile, el: HTMLElement): void {
-		el.createEl("div", { text: file.basename, cls: "suggestion-title" });
+		el.createDiv({ text: file.basename, cls: "suggestion-title" });
 		el.createEl("small", { text: file.path, cls: "suggestion-content" });
 	}
 
