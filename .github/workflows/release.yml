@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
 
@@ -49,8 +51,13 @@ jobs:
           test -f manifest.json
           test -f styles.css
 
-      - name: Create ZIP artifact
-        run: zip today-pane.zip main.js manifest.json styles.css
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create release
         env:
@@ -61,10 +68,10 @@ jobs:
           tag="${GITHUB_REF#refs/tags/}"
 
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" main.js manifest.json styles.css today-pane.zip --clobber
+            gh release upload "$tag" main.js manifest.json styles.css --clobber
           else
             gh release create "$tag" \
               --title="$tag" \
               --draft \
-              main.js manifest.json styles.css today-pane.zip
+              main.js manifest.json styles.css
           fi
