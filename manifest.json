@@ -1,7 +1,7 @@
 {
 	"id": "today-pane",
 	"name": "Today Pane",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"minAppVersion": "1.7.2",
 	"description": "Always display today's daily note in a side panel.",
 	"author": "imaikosuke",
