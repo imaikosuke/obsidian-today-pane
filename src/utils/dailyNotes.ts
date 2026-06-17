@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from "obsidian";
+import { App, Notice, TFile, moment } from "obsidian";
 import { ExtendedApp, DailyNoteOptions, DailyNotesInstance } from "../types/obsidian-internal";
 import { TodayPaneSettings } from "../settings";
 
@@ -217,29 +217,12 @@ export function getDailyNoteSettings(app: App, pluginSettings?: TodayPaneSetting
 }
 
 /**
- * Format date for daily note
- * @param date - Date to format
- * @param format - Format string (e.g., "YYYY-MM-DD", "YYYY/MM/DD", "YYYY/MM/YYYY-MM-DD")
- * @returns Formatted date string
+ * Format date for daily note using the full set of moment.js tokens
+ * (YYYY, MM, DD, ddd, dddd, MMM, MMMM, etc.) — matches Obsidian's
+ * Daily Notes plugin behaviour.
  */
 export function formatDateForDailyNote(date: Date, format: string): string {
-	const year = String(date.getFullYear());
-	const yearShort = year.slice(-2);
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const monthNoPad = String(date.getMonth() + 1);
-	const day = String(date.getDate()).padStart(2, "0");
-	const dayNoPad = String(date.getDate());
-
-	// Replace from longest patterns (YYYY → YY → MM → M → DD → D)
-	// Replacing YYYY first prevents incorrect replacement of YY
-	// Replacing MM and DD first prevents incorrect replacement of single M or D
-	return format
-		.replace(/YYYY/g, year)
-		.replace(/MM/g, month)
-		.replace(/DD/g, day)
-		.replace(/YY/g, yearShort)
-		.replace(/M/g, monthNoPad)
-		.replace(/D/g, dayNoPad);
+	return moment(date).format(format);
 }
 
 /**
@@ -297,43 +280,28 @@ export function isNonTodayDailyNote(app: App, filePath: string, pluginSettings?:
 		return false;
 	}
 
-	// Check daily note folder
 	const folder = settings.folder || "";
 	const format = settings.format || "YYYY-MM-DD";
 
-	// Get filename (without extension)
-	const nameWithoutExt: string = (() => {
-		if (folder) {
-			const folderPrefix = folder.endsWith("/") ? folder : `${folder}/`;
-			// Check if file path is within the daily note folder
-			if (!filePath.startsWith(folderPrefix)) {
-				return "";
-			}
-			// Get filename without the folder part
-			const fileName = filePath.substring(folderPrefix.length);
-			return fileName.replace(/\.md$/, "");
-		} else {
-			// If no folder is set, get the filename
-			const fileName = filePath.split("/").pop() || "";
-			return fileName.replace(/\.md$/, "");
+	// Strip extension and (when set) the configured folder prefix so the
+	// remaining string matches the format the way moment would print it.
+	const candidate: string = (() => {
+		const withoutExt = filePath.replace(/\.md$/, "");
+		if (!folder) {
+			return withoutExt;
 		}
+		const folderPrefix = folder.endsWith("/") ? folder : `${folder}/`;
+		if (!withoutExt.startsWith(folderPrefix)) {
+			return "";
+		}
+		return withoutExt.substring(folderPrefix.length);
 	})();
 
-	// Generate daily note pattern based on format
-	// Convert format string to regex pattern
-	// YYYY -> \d{4}, YY -> \d{2}, MM -> \d{1,2}, M -> \d{1,2}, DD -> \d{1,2}, D -> \d{1,2}
-	const pattern = format
-		.replace(/YYYY/g, "\\d{4}")
-		.replace(/YY(?![Y])/g, "\\d{2}")
-		.replace(/MM(?![M])/g, "\\d{1,2}")
-		.replace(/M(?![M])/g, "\\d{1,2}")
-		.replace(/DD(?![D])/g, "\\d{1,2}")
-		.replace(/D(?![D])/g, "\\d{1,2}")
-		.replace(/([-/_.])/g, "\\$1"); // Escape separators (-, /, _, etc.)
-	
-	// Check if it matches the pattern
-	const regex = new RegExp(`^${pattern}$`);
-	return regex.test(nameWithoutExt);
+	if (!candidate) {
+		return false;
+	}
+
+	return moment(candidate, format, true).isValid();
 }
 
 /**
