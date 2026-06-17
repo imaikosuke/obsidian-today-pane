@@ -53,6 +53,16 @@ From **Settings → Community plugins → Today Pane**, you can change the follo
 - **Daily note format**: (Optional) Override the date format for daily notes
 - **Daily note template file**: (Optional) Override the template file used for creating new daily notes
 
+## Compatibility
+
+Today Pane is built for Obsidian's **core Daily Notes** plugin. It reads the folder, date format, and template from there automatically.
+
+It does **not** natively support **[Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes)** or **[Journals](https://github.com/srg-kostyrko/obsidian-journal)**, since those plugins use different settings and note-creation logic.
+
+You can try manually setting the folder, date format, and template in Today Pane's override settings, but behavior may not fully match Periodic Notes or Journals.
+
+This plugin has been tested with the core Daily Notes setup only.
+
 ## License
 
 MIT
